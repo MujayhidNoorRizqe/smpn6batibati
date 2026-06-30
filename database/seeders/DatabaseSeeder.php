@@ -1,23 +1,24 @@
 <?php
 
+// penjelasan: File ini adalah seeder utama Laravel.
+// penjelasan: Dari file ini kita bisa memanggil seeder lain, termasuk SuperAdminSeeder.
+
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+// penjelasan: Seeder adalah class bawaan Laravel untuk menjalankan data awal.
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * penjelasan: Method run() dijalankan saat menjalankan php artisan db:seed.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // penjelasan: Baris ini memanggil SuperAdminSeeder.
+        // penjelasan: Jadi saat seeder utama dijalankan, akun super admin otomatis dibuat.
+        $this->call([
+            SuperAdminSeeder::class,
         ]);
     }
 }
