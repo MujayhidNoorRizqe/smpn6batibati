@@ -1,25 +1,50 @@
 /* penjelasan: File ini adalah CSS utama untuk dashboard admin/internal. */
 /* penjelasan: File ini dipanggil dari resources/views/admin/layouts/app.blade.php. */
-/* penjelasan: CSS ini mengatur sidebar fixed, sidebar scroll sendiri, topbar, konten, card, footer, dan tombol scroll up. */
+/* penjelasan: File ini berfungsi untuk mengatur tampilan dashboard, sidebar, topbar, konten, tabel, tombol aksi, footer, dan tombol scroll up. */
 /* penjelasan: File ini tidak memakai preprocessor seperti Sass atau Less, hanya CSS biasa. */
+/* penjelasan: File ini juga tidak memakai CSS framework tambahan selain Bootstrap yang sudah dipanggil dari layout. */
 
+
+/* =========================================================
+   1. ROOT VARIABLE
+   ========================================================= */
+
+/* penjelasan: :root digunakan untuk menyimpan variabel CSS global. */
+/* penjelasan: Variabel ini memudahkan perubahan warna, ukuran sidebar, dan tinggi topbar dari satu tempat. */
 :root {
-    /* penjelasan: Variabel CSS digunakan agar warna dan ukuran mudah diubah dari satu tempat. */
     --sidebar-width: 270px;
     --topbar-height: 70px;
+
     --primary-color: #0d6efd;
+    --primary-hover: #0b5ed7;
+
     --sidebar-bg: #0f172a;
     --sidebar-bg-soft: #1e293b;
     --sidebar-text: #cbd5e1;
     --sidebar-muted: #94a3b8;
+
     --body-bg: #f5f6fa;
     --card-bg: #ffffff;
     --border-color: #e5e7eb;
+
     --text-dark: #1f2937;
     --text-muted: #6b7280;
+
+    --success-bg: #dcfce7;
+    --success-text: #166534;
+
+    --danger-bg: #fee2e2;
+    --danger-text: #991b1b;
 }
 
-/* penjelasan: Mengatur dasar body agar background dashboard konsisten. */
+
+/* =========================================================
+   2. BASE STYLE
+   ========================================================= */
+
+/* penjelasan: Mengatur dasar halaman dashboard. */
+/* penjelasan: min-height 100vh membuat body minimal setinggi layar. */
+/* penjelasan: background memakai warna abu muda agar dashboard terlihat bersih. */
 body {
     min-height: 100vh;
     background-color: var(--body-bg);
@@ -27,13 +52,21 @@ body {
 }
 
 /* penjelasan: admin-wrapper adalah pembungkus utama dashboard. */
+/* penjelasan: Di dalam admin-wrapper terdapat sidebar kiri dan area konten kanan. */
 .admin-wrapper {
     min-height: 100vh;
 }
 
+
+/* =========================================================
+   3. SIDEBAR
+   ========================================================= */
+
 /* penjelasan: admin-sidebar adalah sidebar kiri dashboard. */
-/* penjelasan: position fixed membuat sidebar tidak ikut bergerak saat halaman utama discroll. */
-/* penjelasan: overflow-y auto membuat sidebar bisa discroll sendiri jika menu panjang. */
+/* penjelasan: position fixed membuat sidebar tetap diam saat halaman utama discroll. */
+/* penjelasan: height 100vh membuat sidebar setinggi layar. */
+/* penjelasan: overflow-y auto membuat sidebar bisa discroll sendiri jika menu terlalu panjang. */
+/* penjelasan: z-index 1000 memastikan sidebar berada di atas elemen biasa. */
 .admin-sidebar {
     position: fixed;
     top: 0;
@@ -47,25 +80,29 @@ body {
     z-index: 1000;
 }
 
-/* penjelasan: Mengatur scrollbar sidebar agar lebih kecil dan rapi. */
+/* penjelasan: Mengatur lebar scrollbar khusus untuk browser berbasis WebKit seperti Chrome dan Edge. */
 .admin-sidebar::-webkit-scrollbar {
     width: 6px;
 }
 
+/* penjelasan: Mengatur warna track atau jalur scrollbar sidebar. */
 .admin-sidebar::-webkit-scrollbar-track {
     background-color: var(--sidebar-bg);
 }
 
+/* penjelasan: Mengatur warna batang scrollbar sidebar. */
 .admin-sidebar::-webkit-scrollbar-thumb {
     background-color: #334155;
     border-radius: 10px;
 }
 
+/* penjelasan: Mengubah warna scrollbar saat diarahkan cursor. */
 .admin-sidebar::-webkit-scrollbar-thumb:hover {
     background-color: #475569;
 }
 
-/* penjelasan: sidebar-brand adalah bagian atas sidebar yang menampilkan nama sekolah/sistem. */
+/* penjelasan: sidebar-brand adalah bagian atas sidebar untuk identitas sistem/sekolah. */
+/* penjelasan: min-height disamakan dengan topbar agar tampilan kiri dan kanan sejajar. */
 .sidebar-brand {
     min-height: var(--topbar-height);
     display: flex;
@@ -75,7 +112,7 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* penjelasan: brand-logo adalah kotak icon sekolah di sidebar. */
+/* penjelasan: brand-logo adalah kotak icon di bagian brand sidebar. */
 .brand-logo {
     width: 42px;
     height: 42px;
@@ -87,20 +124,21 @@ body {
     font-size: 20px;
 }
 
-/* penjelasan: Judul brand sekolah. */
+/* penjelasan: brand-title adalah judul nama sekolah pada sidebar. */
 .brand-title {
     font-size: 16px;
     line-height: 1.2;
     margin: 0;
 }
 
-/* penjelasan: Subtitle kecil brand. */
+/* penjelasan: brand-subtitle adalah teks kecil di bawah nama sekolah. */
 .brand-subtitle {
     color: var(--sidebar-muted);
     font-size: 12px;
 }
 
-/* penjelasan: sidebar-user menampilkan user aktif di sidebar. */
+/* penjelasan: sidebar-user adalah kotak informasi user yang sedang login. */
+/* penjelasan: Kotak ini menampilkan avatar huruf, nama user, dan role user. */
 .sidebar-user {
     display: flex;
     align-items: center;
@@ -111,7 +149,7 @@ body {
     background-color: rgba(255, 255, 255, 0.06);
 }
 
-/* penjelasan: user-avatar menampilkan huruf awal nama user. */
+/* penjelasan: user-avatar menampilkan huruf pertama dari nama user. */
 .user-avatar {
     width: 38px;
     height: 38px;
@@ -124,12 +162,14 @@ body {
     font-weight: 700;
 }
 
-/* penjelasan: user-info diberi min-width 0 agar teks panjang tidak merusak layout. */
+/* penjelasan: user-info membungkus nama dan role user. */
+/* penjelasan: min-width 0 membantu text-overflow bekerja dengan baik jika nama terlalu panjang. */
 .user-info {
     min-width: 0;
 }
 
-/* penjelasan: user-name menampilkan nama user. */
+/* penjelasan: user-name adalah nama user di sidebar. */
+/* penjelasan: white-space, overflow, dan text-overflow membuat nama panjang menjadi titik-titik. */
 .user-name {
     color: #ffffff;
     font-size: 14px;
@@ -139,18 +179,19 @@ body {
     text-overflow: ellipsis;
 }
 
-/* penjelasan: user-role menampilkan role user. */
+/* penjelasan: user-role adalah role user di sidebar. */
 .user-role {
     color: var(--sidebar-muted);
     font-size: 12px;
 }
 
-/* penjelasan: sidebar-menu adalah area daftar menu. */
+/* penjelasan: sidebar-menu adalah area daftar menu dashboard. */
 .sidebar-menu {
     padding: 0 14px 20px;
 }
 
-/* penjelasan: sidebar-section-title adalah judul kelompok menu, seperti Utama, Akademik, Absensi. */
+/* penjelasan: sidebar-section-title adalah judul kelompok menu. */
+/* penjelasan: Contohnya Utama, Manajemen, Akademik, Absensi, dan Sistem. */
 .sidebar-section-title {
     color: var(--sidebar-muted);
     font-size: 11px;
@@ -160,7 +201,9 @@ body {
     margin: 18px 10px 8px;
 }
 
-/* penjelasan: Link menu sidebar. */
+/* penjelasan: Mengatur tampilan link menu sidebar. */
+/* penjelasan: display flex membuat icon dan teks sejajar. */
+/* penjelasan: gap memberi jarak antara icon dan teks. */
 .sidebar-menu a {
     display: flex;
     align-items: center;
@@ -174,21 +217,29 @@ body {
     transition: 0.2s ease;
 }
 
-/* penjelasan: Icon pada menu sidebar. */
+/* penjelasan: Mengatur ukuran icon pada menu sidebar. */
+/* penjelasan: width 20px membuat posisi teks menu sejajar rapi. */
 .sidebar-menu a i {
     width: 20px;
     font-size: 16px;
 }
 
-/* penjelasan: Efek hover dan menu aktif. */
+/* penjelasan: Hover adalah efek saat cursor diarahkan ke menu. */
+/* penjelasan: Active adalah menu yang sedang dibuka. */
 .sidebar-menu a:hover,
 .sidebar-menu a.active {
     background-color: var(--sidebar-bg-soft);
     color: #ffffff;
 }
 
-/* penjelasan: admin-main adalah area konten kanan. */
+
+/* =========================================================
+   4. MAIN AREA
+   ========================================================= */
+
+/* penjelasan: admin-main adalah area kanan dashboard. */
 /* penjelasan: margin-left dibuat sama dengan lebar sidebar agar konten tidak tertutup sidebar fixed. */
+/* penjelasan: display flex column membuat topbar, content, dan footer tersusun vertikal. */
 .admin-main {
     margin-left: var(--sidebar-width);
     min-height: 100vh;
@@ -196,8 +247,21 @@ body {
     flex-direction: column;
 }
 
-/* penjelasan: admin-topbar adalah header atas area konten. */
-/* penjelasan: sticky membuat topbar tetap terlihat di atas saat konten discroll. */
+/* penjelasan: admin-content adalah area isi halaman dashboard. */
+/* penjelasan: flex 1 membuat area konten mengisi ruang kosong sebelum footer. */
+.admin-content {
+    flex: 1;
+    padding: 24px;
+}
+
+
+/* =========================================================
+   5. TOPBAR
+   ========================================================= */
+
+/* penjelasan: admin-topbar adalah header atas dashboard. */
+/* penjelasan: sticky membuat topbar tetap terlihat di bagian atas saat konten discroll. */
+/* penjelasan: z-index 900 membuat topbar berada di atas konten, tetapi tetap di bawah sidebar. */
 .admin-topbar {
     height: var(--topbar-height);
     background-color: #ffffff;
@@ -210,19 +274,19 @@ body {
     z-index: 900;
 }
 
-/* penjelasan: Judul halaman pada topbar. */
+/* penjelasan: topbar-title adalah judul halaman di topbar. */
 .topbar-title {
     margin: 0;
     font-weight: 700;
     color: var(--text-dark);
 }
 
-/* penjelasan: Subtitle kecil pada topbar. */
+/* penjelasan: topbar-subtitle adalah teks kecil di bawah judul topbar. */
 .topbar-subtitle {
     color: var(--text-muted);
 }
 
-/* penjelasan: topbar-right adalah bagian kanan topbar. */
+/* penjelasan: topbar-right adalah area kanan topbar yang berisi status, user, dan logout. */
 .topbar-right {
     margin-left: auto;
     display: flex;
@@ -230,25 +294,31 @@ body {
     gap: 14px;
 }
 
-/* penjelasan: Informasi user di topbar. */
+/* penjelasan: topbar-user membungkus nama dan role user di topbar. */
 .topbar-user {
     text-align: right;
     line-height: 1.2;
 }
 
-/* penjelasan: Nama user di topbar. */
+/* penjelasan: topbar-user-name adalah nama user pada topbar. */
 .topbar-user-name {
     font-size: 14px;
     font-weight: 700;
 }
 
-/* penjelasan: Role user di topbar. */
+/* penjelasan: topbar-user-role adalah role user pada topbar. */
 .topbar-user-role {
     font-size: 12px;
     color: var(--text-muted);
 }
 
-/* penjelasan: Badge status akun. */
+
+/* =========================================================
+   6. BADGE STATUS
+   ========================================================= */
+
+/* penjelasan: status-badge dipakai untuk badge status akun di topbar. */
+/* penjelasan: Badge ini menampilkan status aktif atau nonaktif. */
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -258,35 +328,101 @@ body {
     font-weight: 700;
 }
 
-/* penjelasan: Warna badge untuk status aktif. */
+/* penjelasan: Warna badge untuk akun aktif. */
 .status-aktif {
-    background-color: #dcfce7;
-    color: #166534;
+    background-color: var(--success-bg);
+    color: var(--success-text);
 }
 
-/* penjelasan: Warna badge untuk status nonaktif. */
+/* penjelasan: Warna badge untuk akun nonaktif. */
 .status-nonaktif {
-    background-color: #fee2e2;
-    color: #991b1b;
+    background-color: var(--danger-bg);
+    color: var(--danger-text);
 }
 
-/* penjelasan: admin-content adalah area isi halaman. */
-.admin-content {
-    flex: 1;
-    padding: 24px;
-}
 
-/* penjelasan: Tampilan card dashboard dibuat lebih halus. */
+/* =========================================================
+   7. CARD, TABLE, DAN ELEMEN UMUM
+   ========================================================= */
+
+/* penjelasan: Mengatur semua card Bootstrap agar sudutnya lebih membulat dan modern. */
 .card {
     border-radius: 14px;
 }
 
-/* penjelasan: shadow-sm bawaan Bootstrap dibuat tetap lembut. */
+/* penjelasan: Mengatur bayangan card agar lebih lembut. */
+/* penjelasan: !important dipakai untuk menimpa shadow-sm bawaan Bootstrap. */
 .shadow-sm {
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06) !important;
 }
 
-/* penjelasan: admin-footer adalah footer kecil di bawah dashboard. */
+/* penjelasan: admin-table adalah class khusus untuk tabel di halaman admin. */
+/* penjelasan: Class ini dipakai agar tabel admin memiliki ukuran font dan spacing yang konsisten. */
+.admin-table {
+    font-size: 14px;
+}
+
+/* penjelasan: Mengatur padding header dan isi tabel admin agar lebih nyaman dibaca. */
+/* penjelasan: vertical-align middle membuat isi tabel berada di tengah secara vertikal. */
+.admin-table th,
+.admin-table td {
+    padding: 14px 12px;
+    vertical-align: middle;
+}
+
+/* penjelasan: table-action-column dipasang pada kolom Aksi. */
+/* penjelasan: min-width membuat kolom aksi cukup lebar untuk tombol Edit, Reset, dan Nonaktif/Aktifkan. */
+.table-action-column {
+    min-width: 270px;
+}
+
+/* penjelasan: action-buttons adalah pembungkus tombol aksi di tabel. */
+/* penjelasan: display flex membuat tombol sejajar horizontal. */
+/* penjelasan: gap memberi jarak antar tombol agar tidak menempel. */
+/* penjelasan: flex-wrap wrap membuat tombol turun otomatis jika ruang sempit. */
+/* penjelasan: justify-content flex-end membuat tombol rata kanan pada kolom Aksi. */
+.action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* penjelasan: action-buttons form mengatur form kecil yang membungkus tombol status. */
+/* penjelasan: margin 0 mencegah form memberi jarak tambahan yang membuat tombol tidak sejajar. */
+.action-buttons form {
+    margin: 0;
+}
+
+/* penjelasan: action-btn adalah class tambahan untuk tombol aksi kecil. */
+/* penjelasan: min-width membuat ukuran tombol lebih stabil. */
+/* penjelasan: inline-flex membuat icon dan teks sejajar di tengah tombol. */
+/* penjelasan: gap memberi jarak antara icon dan teks tombol. */
+.action-btn {
+    min-width: 90px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 8px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* penjelasan: Mengatur tombol disabled pada aksi agar tetap rapi. */
+/* penjelasan: Cursor not-allowed menunjukkan bahwa tombol tidak bisa diklik. */
+.action-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+
+/* =========================================================
+   8. FOOTER
+   ========================================================= */
+
+/* penjelasan: admin-footer adalah footer kecil di bagian bawah dashboard. */
 .admin-footer {
     padding: 14px 24px;
     font-size: 12px;
@@ -297,9 +433,15 @@ body {
     background-color: #ffffff;
 }
 
+
+/* =========================================================
+   9. SCROLL UP BUTTON
+   ========================================================= */
+
 /* penjelasan: scroll-up-btn adalah tombol melayang untuk kembali ke atas halaman. */
-/* penjelasan: Tombol ini disembunyikan dulu dengan opacity 0 dan visibility hidden. */
-/* penjelasan: Nanti admin.js akan menambahkan class show saat halaman discroll. */
+/* penjelasan: position fixed membuat tombol tetap berada di kanan bawah layar. */
+/* penjelasan: opacity 0 dan visibility hidden membuat tombol disembunyikan saat halaman masih di atas. */
+/* penjelasan: admin.js akan menambahkan class show saat halaman discroll lebih dari batas tertentu. */
 .scroll-up-btn {
     position: fixed;
     right: 24px;
@@ -322,6 +464,7 @@ body {
 }
 
 /* penjelasan: Class show membuat tombol scroll up tampil. */
+/* penjelasan: Class ini ditambahkan dan dihapus oleh public/assets/admin/js/admin.js. */
 .scroll-up-btn.show {
     opacity: 1;
     visibility: visible;
@@ -330,12 +473,17 @@ body {
 
 /* penjelasan: Efek hover tombol scroll up. */
 .scroll-up-btn:hover {
-    background-color: #0b5ed7;
+    background-color: var(--primary-hover);
 }
 
-/* penjelasan: Responsive untuk layar tablet dan HP. */
+
+/* =========================================================
+   10. RESPONSIVE TABLET
+   ========================================================= */
+
+/* penjelasan: Bagian ini mengatur tampilan dashboard pada tablet dan layar kecil. */
 @media (max-width: 991px) {
-    /* penjelasan: Di layar kecil, sidebar tidak fixed agar tampilan tidak sempit. */
+    /* penjelasan: Di layar kecil, sidebar dibuat tidak fixed agar tidak menutupi konten. */
     .admin-sidebar {
         position: relative;
         width: 100%;
@@ -343,17 +491,17 @@ body {
         max-height: 360px;
     }
 
-    /* penjelasan: Area utama tidak perlu margin kiri saat sidebar berada di atas. */
+    /* penjelasan: Karena sidebar tidak fixed di layar kecil, area utama tidak perlu margin kiri. */
     .admin-main {
         margin-left: 0;
     }
 
-    /* penjelasan: Wrapper berubah menjadi satu kolom. */
+    /* penjelasan: admin-wrapper dibuat block agar sidebar berada di atas konten. */
     .admin-wrapper {
         display: block;
     }
 
-    /* penjelasan: Topbar dibuat lebih fleksibel di layar kecil. */
+    /* penjelasan: Topbar dibuat fleksibel agar tidak pecah di layar kecil. */
     .admin-topbar {
         height: auto;
         min-height: var(--topbar-height);
@@ -362,6 +510,7 @@ body {
         flex-wrap: wrap;
     }
 
+    /* penjelasan: Area kanan topbar dibuat penuh agar tombol logout tetap rapi. */
     .topbar-right {
         width: 100%;
         justify-content: space-between;
@@ -369,18 +518,44 @@ body {
     }
 }
 
-/* penjelasan: Responsive untuk layar HP kecil. */
+
+/* =========================================================
+   11. RESPONSIVE MOBILE
+   ========================================================= */
+
+/* penjelasan: Bagian ini mengatur tampilan dashboard pada layar HP. */
+@media (max-width: 768px) {
+    /* penjelasan: Kolom aksi dibuat sedikit lebih kecil agar tetap muat di layar sempit. */
+    .table-action-column {
+        min-width: 230px;
+    }
+
+    /* penjelasan: Tombol aksi dibuat rata kiri pada layar kecil agar lebih natural saat tabel discroll. */
+    .action-buttons {
+        justify-content: flex-start;
+    }
+
+    /* penjelasan: Ukuran tombol aksi dibuat sedikit lebih kecil pada mobile. */
+    .action-btn {
+        min-width: 82px;
+    }
+}
+
+/* penjelasan: Bagian ini mengatur tampilan dashboard pada HP ukuran kecil. */
 @media (max-width: 576px) {
+    /* penjelasan: Padding konten dikurangi agar ruang layar tidak terlalu sempit. */
     .admin-content {
         padding: 16px;
     }
 
+    /* penjelasan: Footer dibuat satu kolom agar teks tidak bertabrakan. */
     .admin-footer {
         flex-direction: column;
         gap: 4px;
         padding: 14px 16px;
     }
 
+    /* penjelasan: Posisi tombol scroll up disesuaikan di layar kecil. */
     .scroll-up-btn {
         right: 16px;
         bottom: 16px;

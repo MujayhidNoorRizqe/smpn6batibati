@@ -53,7 +53,7 @@
 
             <div class="sidebar-section-title">Manajemen</div>
 
-            <a href="#">
+            <a href="{{ route('super-admin.users.index') }}" class="{{ request()->routeIs('super-admin.users.*') ? 'active' : '' }}">
                 <i class="bi bi-people"></i>
                 <span>Manajemen User</span>
             </a>
