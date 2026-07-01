@@ -1,67 +1,126 @@
 {{-- penjelasan: File ini adalah layout utama dashboard internal. --}}
-{{-- penjelasan: Layout ini dipakai oleh dashboard super admin, admin, guru, dan staff. --}}
-{{-- penjelasan: Tujuannya agar struktur HTML, navbar, Bootstrap, dan tombol logout tidak ditulis berulang di setiap halaman. --}}
-{{-- penjelasan: File dashboard tiap role akan memanggil layout ini memakai @extends('admin.layouts.app'). --}}
+{{-- penjelasan: Layout ini dipakai oleh halaman dashboard super admin, admin, guru, dan staff. --}}
+{{-- penjelasan: File ini dipanggil oleh halaman lain memakai @extends('admin.layouts.app'). --}}
+{{-- penjelasan: File ini memakai Bootstrap CDN sebagai library CSS dan JavaScript untuk tampilan dashboard. --}}
 
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
 
-    {{-- penjelasan: Viewport membuat dashboard responsive di laptop dan HP. --}}
+    {{-- penjelasan: Viewport membuat tampilan dashboard menyesuaikan ukuran layar laptop dan HP. --}}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    {{-- penjelasan: @yield('title') akan diganti oleh judul dari halaman yang memakai layout ini. --}}
+    {{-- penjelasan: @yield('title') akan diisi oleh halaman yang memakai layout ini. --}}
     <title>@yield('title', 'Dashboard') - SMPN 6 Bati-Bati</title>
 
     {{-- penjelasan: Bootstrap adalah library CSS eksternal. --}}
-    {{-- penjelasan: Bootstrap dipakai sementara untuk membuat tampilan dashboard rapi dan cepat dibuat. --}}
+    {{-- penjelasan: Bootstrap digunakan agar tampilan dashboard rapi tanpa membuat CSS dari nol. --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    {{-- penjelasan: CSS di bawah ini adalah CSS internal khusus untuk layout dashboard. --}}
+    {{-- penjelasan: CSS ini mengatur sidebar, topbar, dan area konten dashboard. --}}
+    <style>
+        body {
+            min-height: 100vh;
+            background-color: #f5f6fa;
+        }
+
+        .dashboard-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .dashboard-sidebar {
+            width: 260px;
+            background-color: #0f172a;
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .dashboard-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .sidebar-brand {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-menu {
+            padding: 15px;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            color: #cbd5e1;
+            text-decoration: none;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background-color: #1e293b;
+            color: #ffffff;
+        }
+
+        .sidebar-section-title {
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin: 18px 12px 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .topbar {
+            height: 64px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-wrapper {
+                flex-direction: column;
+            }
+
+            .dashboard-sidebar {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
-<body class="bg-light">
+<body>
 
-    {{-- penjelasan: Navbar atas dashboard. --}}
-    <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm">
-        <div class="container-fluid px-4">
+    {{-- penjelasan: dashboard-wrapper membungkus sidebar dan konten utama dashboard. --}}
+    <div class="dashboard-wrapper">
 
-            {{-- penjelasan: Nama aplikasi/sekolah ditampilkan di kiri navbar. --}}
-            <span class="navbar-brand fw-bold">
-                SMPN 6 Bati-Bati
-            </span>
+        {{-- penjelasan: Sidebar dipisahkan ke file component agar lebih rapi. --}}
+        {{-- penjelasan: File yang dipanggil adalah resources/views/admin/components/sidebar.blade.php. --}}
+        @include('admin.components.sidebar')
 
-            <div class="d-flex align-items-center gap-3 ms-auto">
+        {{-- penjelasan: dashboard-content adalah area kanan yang berisi topbar dan halaman utama. --}}
+        <div class="dashboard-content">
 
-                {{-- penjelasan: auth()->user() mengambil data user yang sedang login. --}}
-                {{-- penjelasan: Data ini berasal dari tabel users setelah proses login berhasil. --}}
-                <span class="text-muted small">
-                    {{ auth()->user()->name ?? 'User' }} |
-                    {{ auth()->user()->role ?? '-' }}
-                </span>
+            {{-- penjelasan: Topbar dipisahkan ke component agar bisa dipakai berulang. --}}
+            {{-- penjelasan: File yang dipanggil adalah resources/views/admin/components/topbar.blade.php. --}}
+            @include('admin.components.topbar')
 
-                {{-- penjelasan: Form logout dikirim ke route logout. --}}
-                {{-- penjelasan: Logout memakai method POST karena lebih aman dibanding GET. --}}
-                <form action="{{ route('logout') }}" method="POST" class="mb-0">
-                    @csrf
+            {{-- penjelasan: Main adalah area isi halaman. --}}
+            <main class="p-4">
 
-                    <button type="submit" class="btn btn-outline-danger btn-sm">
-                        Logout
-                    </button>
-                </form>
-            </div>
+                {{-- penjelasan: @yield('content') akan diisi oleh halaman dashboard masing-masing role. --}}
+                @yield('content')
+
+            </main>
         </div>
-    </nav>
+    </div>
 
-    {{-- penjelasan: Bagian utama dashboard. --}}
-    <main class="container-fluid px-4 py-4">
-
-        {{-- penjelasan: @yield('content') adalah tempat isi halaman dashboard dimasukkan. --}}
-        {{-- penjelasan: Setiap dashboard role akan mengisi bagian ini dengan @section('content'). --}}
-        @yield('content')
-
-    </main>
-
-    {{-- penjelasan: Bootstrap JavaScript dipakai untuk komponen Bootstrap yang butuh interaksi. --}}
+    {{-- penjelasan: Bootstrap JavaScript dipakai untuk komponen Bootstrap yang membutuhkan interaksi. --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>

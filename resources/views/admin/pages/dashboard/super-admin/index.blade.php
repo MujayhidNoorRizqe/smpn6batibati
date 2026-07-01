@@ -1,35 +1,73 @@
-{{-- penjelasan: File ini adalah halaman dashboard awal untuk super admin. --}}
+{{-- penjelasan: File ini adalah halaman dashboard untuk super admin. --}}
 {{-- penjelasan: File ini dipanggil oleh route /super-admin/dashboard. --}}
-{{-- penjelasan: Halaman ini hanya bisa dibuka jika user login dan memiliki role super_admin. --}}
+{{-- penjelasan: Halaman ini hanya bisa diakses user dengan role super_admin. --}}
 
-{{-- penjelasan: Baris ini memakai layout utama dashboard dari resources/views/admin/layouts/app.blade.php. --}}
+{{-- penjelasan: Halaman ini memakai layout utama dashboard. --}}
 @extends('admin.layouts.app')
 
-{{-- penjelasan: Section title mengisi @yield('title') di layout dashboard. --}}
+{{-- penjelasan: Section title akan mengisi judul halaman di layout dan topbar. --}}
 @section('title', 'Dashboard Super Admin')
 
-{{-- penjelasan: Section content mengisi @yield('content') di layout dashboard. --}}
+{{-- penjelasan: Section content adalah isi utama halaman dashboard. --}}
 @section('content')
 
-    <div class="row">
+    <div class="row mb-4">
         <div class="col-12">
-
-            {{-- penjelasan: Card ini adalah tampilan awal dashboard super admin. --}}
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
 
-                    <h3 class="fw-bold mb-2">Dashboard Super Admin</h3>
+                    {{-- penjelasan: auth()->user()->name digunakan untuk menampilkan nama user yang sedang login. --}}
+                    <h4 class="fw-bold mb-1">Selamat Datang, {{ auth()->user()->name }}</h4>
 
-                    {{-- penjelasan: auth()->user()->name menampilkan nama user yang sedang login. --}}
                     <p class="text-muted mb-0">
-                        Selamat datang, {{ auth()->user()->name }}.
-                        Anda login sebagai Super Admin.
+                        Anda login sebagai Super Admin. Anda memiliki akses penuh terhadap sistem.
                     </p>
 
                 </div>
             </div>
-
         </div>
+    </div>
+
+    {{-- penjelasan: Row ini menampilkan card ringkasan awal. --}}
+    {{-- penjelasan: Angka masih statis sementara, nanti akan dihubungkan ke database. --}}
+    <div class="row g-3">
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">Total Pegawai</small>
+                    <h3 class="fw-bold mb-0">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">Total Murid</small>
+                    <h3 class="fw-bold mb-0">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">Pengajuan Dinas</small>
+                    <h3 class="fw-bold mb-0">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">WhatsApp Terkirim</small>
+                    <h3 class="fw-bold mb-0">0</h3>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 @endsection

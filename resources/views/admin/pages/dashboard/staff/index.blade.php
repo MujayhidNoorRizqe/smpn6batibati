@@ -1,35 +1,60 @@
-{{-- penjelasan: File ini adalah halaman dashboard awal untuk staff. --}}
+{{-- penjelasan: File ini adalah halaman dashboard untuk staff. --}}
 {{-- penjelasan: File ini dipanggil oleh route /staff/dashboard. --}}
-{{-- penjelasan: Halaman ini hanya bisa dibuka jika user login dan memiliki role staff. --}}
+{{-- penjelasan: Halaman ini hanya bisa diakses user dengan role staff. --}}
 
-{{-- penjelasan: Baris ini memakai layout utama dashboard. --}}
 @extends('admin.layouts.app')
 
-{{-- penjelasan: Section title mengisi judul halaman pada layout. --}}
 @section('title', 'Dashboard Staff')
 
-{{-- penjelasan: Section content adalah isi utama halaman dashboard staff. --}}
 @section('content')
 
-    <div class="row">
+    <div class="row mb-4">
         <div class="col-12">
-
-            {{-- penjelasan: Card ini adalah tampilan awal dashboard staff. --}}
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
 
-                    <h3 class="fw-bold mb-2">Dashboard Staff</h3>
+                    <h4 class="fw-bold mb-1">Selamat Datang, {{ auth()->user()->name }}</h4>
 
-                    {{-- penjelasan: auth()->user()->name menampilkan nama staff yang sedang login. --}}
                     <p class="text-muted mb-0">
-                        Selamat datang, {{ auth()->user()->name }}.
-                        Anda login sebagai Staff.
+                        Anda login sebagai Staff. Anda dapat melakukan absensi dan pengajuan dinas.
                     </p>
 
                 </div>
             </div>
-
         </div>
+    </div>
+
+    {{-- penjelasan: Card ini masih tampilan awal. --}}
+    {{-- penjelasan: Nanti status absen dan pengajuan dinas akan diambil dari database. --}}
+    <div class="row g-3">
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">Status Absen Hari Ini</small>
+                    <h5 class="fw-bold mb-0">Belum Absen</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">Jam Masuk</small>
+                    <h5 class="fw-bold mb-0">-</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">Pengajuan Dinas</small>
+                    <h5 class="fw-bold mb-0">0 Menunggu</h5>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 @endsection

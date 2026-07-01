@@ -1,35 +1,69 @@
-{{-- penjelasan: File ini adalah halaman dashboard awal untuk admin. --}}
+{{-- penjelasan: File ini adalah halaman dashboard untuk admin. --}}
 {{-- penjelasan: File ini dipanggil oleh route /admin/dashboard. --}}
-{{-- penjelasan: Halaman ini hanya bisa dibuka jika user login dan memiliki role admin. --}}
+{{-- penjelasan: Halaman ini hanya bisa diakses user dengan role admin. --}}
 
-{{-- penjelasan: Baris ini memakai layout utama dashboard. --}}
 @extends('admin.layouts.app')
 
-{{-- penjelasan: Section title mengisi judul halaman pada layout. --}}
 @section('title', 'Dashboard Admin')
 
-{{-- penjelasan: Section content adalah isi utama halaman dashboard admin. --}}
 @section('content')
 
-    <div class="row">
+    <div class="row mb-4">
         <div class="col-12">
-
-            {{-- penjelasan: Card ini adalah tampilan awal dashboard admin. --}}
             <div class="card border-0 shadow-sm">
                 <div class="card-body">
 
-                    <h3 class="fw-bold mb-2">Dashboard Admin</h3>
+                    <h4 class="fw-bold mb-1">Selamat Datang, {{ auth()->user()->name }}</h4>
 
-                    {{-- penjelasan: auth()->user()->name menampilkan nama admin yang sedang login. --}}
                     <p class="text-muted mb-0">
-                        Selamat datang, {{ auth()->user()->name }}.
-                        Anda login sebagai Admin.
+                        Anda login sebagai Admin. Anda dapat mengelola data akademik, absensi, laporan, dan konten website.
                     </p>
 
                 </div>
             </div>
-
         </div>
+    </div>
+
+    {{-- penjelasan: Card statistik masih memakai angka sementara. --}}
+    {{-- penjelasan: Nanti angka akan diambil dari database menggunakan controller. --}}
+    <div class="row g-3">
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">Total Pegawai</small>
+                    <h3 class="fw-bold mb-0">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">Total Murid</small>
+                    <h3 class="fw-bold mb-0">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">Absensi Hari Ini</small>
+                    <h3 class="fw-bold mb-0">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted">Nilai Terinput</small>
+                    <h3 class="fw-bold mb-0">0</h3>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 @endsection
