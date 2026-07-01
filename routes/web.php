@@ -2,12 +2,17 @@
 
 // penjelasan: File ini mengatur semua route atau URL aplikasi.
 // penjelasan: Route adalah jalur alamat yang dibuka user di browser.
-// penjelasan: Contoh route: /login, /super-admin/dashboard, /super-admin/pegawai, /super-admin/wali-murid.
-// penjelasan: File ini sekarang mengatur route public, login, logout, dashboard, manajemen user, data pegawai, data kelas, dan data wali murid.
+// penjelasan: Contoh route: /login, /super-admin/dashboard, /super-admin/pegawai, /super-admin/murid.
+// penjelasan: File ini sekarang mengatur route public, login, logout, dashboard, manajemen user, data pegawai, data kelas, data wali murid, dan data murid.
 
 use App\Http\Controllers\Admin\KelasController;
 // penjelasan: KelasController digunakan untuk modul Data Kelas.
 // penjelasan: Controller ini menangani daftar kelas, tambah kelas, edit kelas, detail kelas, dan aktif/nonaktif kelas.
+
+use App\Http\Controllers\Admin\MuridController;
+// penjelasan: MuridController digunakan untuk modul Data Murid.
+// penjelasan: Controller ini menangani daftar murid, tambah murid, edit murid, detail murid, upload foto murid, dan aktif/nonaktif murid.
+// penjelasan: Modul Data Murid membutuhkan data kelas dan data wali murid.
 
 use App\Http\Controllers\Admin\PegawaiController;
 // penjelasan: PegawaiController digunakan untuk modul Data Pegawai.
@@ -16,7 +21,7 @@ use App\Http\Controllers\Admin\PegawaiController;
 use App\Http\Controllers\Admin\WaliMuridController;
 // penjelasan: WaliMuridController digunakan untuk modul Data Wali Murid.
 // penjelasan: Controller ini menangani data orang tua/wali murid.
-// penjelasan: Route wali murid nanti dipakai sebelum membuat Data Murid.
+// penjelasan: Route wali murid dipakai sebelum membuat Data Murid karena murid harus dihubungkan ke wali murid.
 
 use App\Http\Controllers\Auth\LoginController;
 // penjelasan: LoginController digunakan untuk fitur login dan logout.
@@ -31,14 +36,47 @@ use Illuminate\Support\Facades\Route;
 
 
 // =========================================================
-// ROUTE PUBLIC
+// ROUTE PUBLIC / HALAMAN AWAL APLIKASI
 // =========================================================
 
-// penjelasan: Route ini adalah halaman utama public website.
-// penjelasan: Saat user membuka URL utama aplikasi, Laravel akan menampilkan file welcome.blade.php.
-// penjelasan: Nanti route ini bisa diganti ke halaman public sekolah.
+// penjelasan: Route ini adalah route utama aplikasi saat user membuka URL "/".
+// penjelasan: Karena file welcome.blade.php sudah tidak ada, maka route ini tidak lagi memakai return view('welcome').
+// penjelasan: Jika user belum login, maka user diarahkan ke halaman login.
+// penjelasan: Jika user sudah login, maka user langsung diarahkan ke dashboard sesuai role akun.
+// penjelasan: Route ini aman dipakai sementara sampai nanti kita membuat halaman public sekolah sendiri.
 Route::get('/', function () {
-    return view('welcome');
+    // penjelasan: auth()->check() digunakan untuk mengecek apakah user sudah login atau belum.
+    // penjelasan: Jika belum login, maka user diarahkan ke route login.
+    if (! auth()->check()) {
+        return redirect()->route('login');
+    }
+
+    // penjelasan: auth()->user() mengambil data user yang sedang login.
+    // penjelasan: Data role dari user dipakai untuk menentukan dashboard tujuan.
+    $user = auth()->user();
+
+    // penjelasan: Jika role user adalah super_admin, arahkan ke dashboard super admin.
+    if ($user->role === 'super_admin') {
+        return redirect()->route('super-admin.dashboard');
+    }
+
+    // penjelasan: Jika role user adalah admin, arahkan ke dashboard admin.
+    if ($user->role === 'admin') {
+        return redirect()->route('admin.dashboard');
+    }
+
+    // penjelasan: Jika role user adalah guru, arahkan ke dashboard guru.
+    if ($user->role === 'guru') {
+        return redirect()->route('guru.dashboard');
+    }
+
+    // penjelasan: Jika role user adalah staff, arahkan ke dashboard staff.
+    if ($user->role === 'staff') {
+        return redirect()->route('staff.dashboard');
+    }
+
+    // penjelasan: Jika role tidak dikenali, arahkan kembali ke login sebagai pengaman.
+    return redirect()->route('login');
 })->name('public.home');
 
 
@@ -218,6 +256,45 @@ Route::middleware(['auth', 'role:super_admin'])
 
         // penjelasan: Route PATCH ini digunakan untuk mengubah status wali murid aktif/nonaktif.
         Route::patch('/wali-murid/{waliMurid}/toggle-status', [WaliMuridController::class, 'toggleStatus'])->name('wali-murid.toggle-status');
+
+
+        // =================================================
+        // DATA MURID
+        // =================================================
+
+        // penjelasan: Route GET /super-admin/murid digunakan untuk menampilkan daftar murid.
+        // penjelasan: Method yang dipanggil adalah MuridController@index.
+        // penjelasan: Halaman ini menampilkan data murid beserta kelas dan wali murid.
+        Route::get('/murid', [MuridController::class, 'index'])->name('murid.index');
+
+        // penjelasan: Route GET /super-admin/murid/create digunakan untuk menampilkan form tambah murid.
+        // penjelasan: Method yang dipanggil adalah MuridController@create.
+        // penjelasan: Form tambah murid membutuhkan data kelas aktif dan wali murid aktif.
+        Route::get('/murid/create', [MuridController::class, 'create'])->name('murid.create');
+
+        // penjelasan: Route POST /super-admin/murid digunakan untuk menyimpan data murid baru.
+        // penjelasan: Method yang dipanggil adalah MuridController@store.
+        // penjelasan: Route ini juga memproses upload foto murid jika ada.
+        Route::post('/murid', [MuridController::class, 'store'])->name('murid.store');
+
+        // penjelasan: Route GET /super-admin/murid/{murid} digunakan untuk menampilkan detail murid.
+        // penjelasan: Parameter {murid} otomatis dibaca Laravel sebagai model Murid berdasarkan id.
+        // penjelasan: Route detail diletakkan setelah /murid/create agar tidak bentrok dengan kata create.
+        Route::get('/murid/{murid}', [MuridController::class, 'show'])->name('murid.show');
+
+        // penjelasan: Route GET /super-admin/murid/{murid}/edit digunakan untuk menampilkan form edit murid.
+        // penjelasan: Method yang dipanggil adalah MuridController@edit.
+        Route::get('/murid/{murid}/edit', [MuridController::class, 'edit'])->name('murid.edit');
+
+        // penjelasan: Route PUT /super-admin/murid/{murid} digunakan untuk menyimpan perubahan data murid.
+        // penjelasan: Method yang dipanggil adalah MuridController@update.
+        // penjelasan: Route ini juga bisa mengganti foto murid jika admin mengupload foto baru.
+        Route::put('/murid/{murid}', [MuridController::class, 'update'])->name('murid.update');
+
+        // penjelasan: Route PATCH ini digunakan untuk mengubah status murid aktif/nonaktif.
+        // penjelasan: PATCH dipakai karena hanya mengubah sebagian data, yaitu kolom status.
+        // penjelasan: Data murid tidak dihapus permanen agar riwayat absensi dan nilai tetap aman.
+        Route::patch('/murid/{murid}/toggle-status', [MuridController::class, 'toggleStatus'])->name('murid.toggle-status');
     });
 
 
@@ -226,7 +303,7 @@ Route::middleware(['auth', 'role:super_admin'])
 // =========================================================
 
 // penjelasan: Group ini khusus untuk role admin.
-// penjelasan: Admin bisa mengelola data pegawai, kelas, dan wali murid.
+// penjelasan: Admin bisa mengelola data pegawai, kelas, wali murid, dan murid.
 // penjelasan: Admin tidak diberi akses Manajemen User karena Manajemen User hanya untuk Super Admin.
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
@@ -321,6 +398,36 @@ Route::middleware(['auth', 'role:admin'])
 
         // penjelasan: Route PATCH ini digunakan untuk mengubah status wali murid aktif/nonaktif.
         Route::patch('/wali-murid/{waliMurid}/toggle-status', [WaliMuridController::class, 'toggleStatus'])->name('wali-murid.toggle-status');
+
+
+        // =================================================
+        // DATA MURID
+        // =================================================
+
+        // penjelasan: Route GET /admin/murid digunakan untuk menampilkan daftar murid.
+        // penjelasan: Method yang dipanggil adalah MuridController@index.
+        Route::get('/murid', [MuridController::class, 'index'])->name('murid.index');
+
+        // penjelasan: Route GET /admin/murid/create digunakan untuk menampilkan form tambah murid.
+        // penjelasan: Method yang dipanggil adalah MuridController@create.
+        Route::get('/murid/create', [MuridController::class, 'create'])->name('murid.create');
+
+        // penjelasan: Route POST /admin/murid digunakan untuk menyimpan data murid baru.
+        // penjelasan: Method yang dipanggil adalah MuridController@store.
+        Route::post('/murid', [MuridController::class, 'store'])->name('murid.store');
+
+        // penjelasan: Route GET /admin/murid/{murid} digunakan untuk menampilkan detail murid.
+        // penjelasan: Parameter {murid} otomatis dibaca sebagai model Murid.
+        Route::get('/murid/{murid}', [MuridController::class, 'show'])->name('murid.show');
+
+        // penjelasan: Route GET /admin/murid/{murid}/edit digunakan untuk menampilkan form edit murid.
+        Route::get('/murid/{murid}/edit', [MuridController::class, 'edit'])->name('murid.edit');
+
+        // penjelasan: Route PUT /admin/murid/{murid} digunakan untuk menyimpan perubahan data murid.
+        Route::put('/murid/{murid}', [MuridController::class, 'update'])->name('murid.update');
+
+        // penjelasan: Route PATCH ini digunakan untuk mengubah status murid aktif/nonaktif.
+        Route::patch('/murid/{murid}/toggle-status', [MuridController::class, 'toggleStatus'])->name('murid.toggle-status');
     });
 
 

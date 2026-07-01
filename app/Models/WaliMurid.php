@@ -2,8 +2,8 @@
 
 // penjelasan: File ini adalah Model WaliMurid.
 // penjelasan: Model ini digunakan Laravel untuk berhubungan dengan tabel wali_murids.
-// penjelasan: Data wali murid nanti akan dihubungkan ke data murid.
-// penjelasan: Untuk sekarang model ini fokus pada penyimpanan data wali/orang tua.
+// penjelasan: Data wali murid dihubungkan ke data murid.
+// penjelasan: Nomor WhatsApp pada model ini nanti digunakan untuk notifikasi Fonnte.
 
 namespace App\Models;
 
@@ -20,7 +20,6 @@ class WaliMurid extends Model
     /**
      * penjelasan: Fillable adalah daftar kolom yang boleh diisi secara massal dari controller.
      * penjelasan: Kolom ini harus sesuai dengan kolom yang ada di tabel wali_murids.
-     * penjelasan: Jika kolom tidak dimasukkan ke fillable, Laravel tidak akan mengizinkan mass assignment untuk kolom tersebut.
      */
     protected $fillable = [
         'nama_wali',
@@ -33,8 +32,16 @@ class WaliMurid extends Model
         'status',
     ];
 
+    // penjelasan: Relasi ini menghubungkan wali murid ke banyak murid.
+    // penjelasan: Satu wali murid bisa memiliki lebih dari satu anak.
+    // penjelasan: Dipanggil misalnya $waliMurid->murids.
+    public function murids()
+    {
+        return $this->hasMany(Murid::class, 'wali_murid_id');
+    }
+
     // penjelasan: Fungsi ini mengecek apakah data wali murid masih aktif.
-    // penjelasan: Fungsi ini nanti bisa dipakai saat memilih wali murid pada form Data Murid.
+    // penjelasan: Fungsi ini dipakai saat memilih wali pada form Data Murid.
     public function isAktif(): bool
     {
         return $this->status === 'aktif';

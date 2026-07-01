@@ -79,16 +79,16 @@
                 <span>Data Pegawai</span>
             </a>
 
-            {{-- penjelasan: Menu Data Murid masih belum aktif karena modul Data Murid belum dibuat. --}}
-            {{-- penjelasan: Sementara href masih # agar tidak error route. --}}
-            <a href="#">
+            {{-- penjelasan: Menu Data Murid sudah aktif. --}}
+            {{-- penjelasan: Menu ini mengarah ke modul data murid untuk super admin. --}}
+            {{-- penjelasan: request()->routeIs('super-admin.murid.*') membuat menu tetap aktif pada halaman daftar, tambah, edit, dan detail murid. --}}
+            <a href="{{ route('super-admin.murid.index') }}" class="{{ request()->routeIs('super-admin.murid.*') ? 'active' : '' }}">
                 <i class="bi bi-person-lines-fill"></i>
                 <span>Data Murid</span>
             </a>
 
             {{-- penjelasan: Menu Data Wali Murid sudah aktif. --}}
             {{-- penjelasan: Menu ini mengarah ke modul wali murid untuk super admin. --}}
-            {{-- penjelasan: Route ini baru berjalan setelah WaliMuridController dan route wali-murid dibuat. --}}
             <a href="{{ route('super-admin.wali-murid.index') }}" class="{{ request()->routeIs('super-admin.wali-murid.*') ? 'active' : '' }}">
                 <i class="bi bi-person-heart"></i>
                 <span>Data Wali Murid</span>
@@ -211,8 +211,10 @@
                 <span>Data Pegawai</span>
             </a>
 
-            {{-- penjelasan: Menu Data Murid belum aktif karena modul Data Murid belum dibuat. --}}
-            <a href="#">
+            {{-- penjelasan: Menu Data Murid sudah aktif untuk Admin. --}}
+            {{-- penjelasan: Menu ini mengarah ke modul data murid. --}}
+            {{-- penjelasan: request()->routeIs('admin.murid.*') membuat menu tetap aktif pada halaman daftar, tambah, edit, dan detail murid. --}}
+            <a href="{{ route('admin.murid.index') }}" class="{{ request()->routeIs('admin.murid.*') ? 'active' : '' }}">
                 <i class="bi bi-person-lines-fill"></i>
                 <span>Data Murid</span>
             </a>

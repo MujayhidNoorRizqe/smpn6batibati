@@ -3,7 +3,7 @@
 // penjelasan: File ini adalah Model Kelas.
 // penjelasan: Model Kelas digunakan untuk berhubungan dengan tabel kelas.
 // penjelasan: Tabel kelas menyimpan data kelas seperti 7A, 8A, dan 9A.
-// penjelasan: Model ini punya relasi ke Pegawai sebagai wali kelas.
+// penjelasan: Model ini punya relasi ke Pegawai sebagai wali kelas dan Murid sebagai daftar siswa.
 
 namespace App\Models;
 
@@ -18,7 +18,7 @@ class Kelas extends Model
     use HasFactory;
 
     // penjelasan: Laravel biasanya menebak nama tabel dari nama model.
-    // penjelasan: Karena nama tabel kita adalah kelas, maka kita set manual agar tidak salah.
+    // penjelasan: Karena nama tabel kita adalah kelas, maka kita set manual agar tidak salah menjadi kelas.
     protected $table = 'kelas';
 
     /**
@@ -34,10 +34,18 @@ class Kelas extends Model
 
     // penjelasan: Relasi ini menghubungkan kelas ke pegawai sebagai wali kelas.
     // penjelasan: wali_kelas_id pada tabel kelas mengarah ke id pada tabel pegawais.
-    // penjelasan: Relasi ini dipanggil misalnya $kelas->waliKelas.
+    // penjelasan: Dipanggil misalnya $kelas->waliKelas.
     public function waliKelas()
     {
         return $this->belongsTo(Pegawai::class, 'wali_kelas_id');
+    }
+
+    // penjelasan: Relasi ini menghubungkan kelas ke banyak murid.
+    // penjelasan: Satu kelas dapat memiliki banyak murid.
+    // penjelasan: Dipanggil misalnya $kelas->murids.
+    public function murids()
+    {
+        return $this->hasMany(Murid::class, 'kelas_id');
     }
 
     // penjelasan: Fungsi ini mengecek apakah kelas masih aktif.
