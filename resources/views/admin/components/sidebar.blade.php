@@ -58,7 +58,7 @@
                 <span>Manajemen User</span>
             </a>
 
-            <a href="#">
+            <a href="{{ route('super-admin.pegawai.index') }}" class="{{ request()->routeIs('super-admin.pegawai.*') ? 'active' : '' }}">
                 <i class="bi bi-person-badge"></i>
                 <span>Data Pegawai</span>
             </a>
@@ -167,7 +167,7 @@
 
             <div class="sidebar-section-title">Data Master</div>
 
-            <a href="#">
+            <a href="{{ route('admin.pegawai.index') }}" class="{{ request()->routeIs('admin.pegawai.*') ? 'active' : '' }}">
                 <i class="bi bi-person-badge"></i>
                 <span>Data Pegawai</span>
             </a>

@@ -1,27 +1,27 @@
 <?php
 
 // penjelasan: File ini adalah Model User.
-// penjelasan: Model digunakan Laravel untuk berhubungan dengan tabel users di database.
+// penjelasan: Model User digunakan Laravel untuk berhubungan dengan tabel users.
+// penjelasan: Tabel users menyimpan akun login seperti super_admin, admin, guru, dan staff.
 
 namespace App\Models;
 
-// penjelasan: HasFactory dipakai agar model User bisa digunakan untuk factory atau data dummy.
+// penjelasan: HasFactory digunakan agar model bisa dipakai untuk factory atau data dummy.
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-// penjelasan: Authenticatable adalah class bawaan Laravel agar User bisa digunakan untuk login.
+// penjelasan: Authenticatable adalah class bawaan Laravel agar User bisa dipakai untuk login.
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-// penjelasan: Notifiable dipakai jika nanti user menerima notifikasi.
+// penjelasan: Notifiable digunakan untuk fitur notifikasi Laravel.
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    // penjelasan: Trait HasFactory dan Notifiable menambahkan fitur factory dan notifikasi ke model User.
     use HasFactory, Notifiable;
 
     /**
-     * penjelasan: Fillable adalah daftar kolom yang boleh diisi secara massal dari controller atau seeder.
-     * penjelasan: Kolom role dipakai untuk membedakan super_admin, admin, guru, dan staff.
+     * penjelasan: Fillable adalah daftar kolom yang boleh diisi secara massal.
+     * penjelasan: Kolom role dipakai untuk membedakan hak akses user.
      * penjelasan: Kolom status dipakai untuk menentukan akun aktif atau nonaktif.
      */
     protected $fillable = [
@@ -34,8 +34,8 @@ class User extends Authenticatable
     ];
 
     /**
-     * penjelasan: Hidden adalah daftar kolom yang disembunyikan saat data user ditampilkan.
-     * penjelasan: Password dan remember_token tidak boleh ditampilkan demi keamanan.
+     * penjelasan: Hidden adalah daftar kolom yang tidak boleh ditampilkan.
+     * penjelasan: Password tidak boleh ditampilkan demi keamanan.
      */
     protected $hidden = [
         'password',
@@ -44,8 +44,7 @@ class User extends Authenticatable
 
     /**
      * penjelasan: Casts digunakan untuk mengubah tipe data otomatis.
-     * penjelasan: email_verified_at dan last_login_at dianggap sebagai data tanggal.
-     * penjelasan: password dengan cast hashed akan otomatis diamankan oleh Laravel.
+     * penjelasan: password memakai hashed agar password otomatis diamankan.
      */
     protected function casts(): array
     {
@@ -56,33 +55,39 @@ class User extends Authenticatable
         ];
     }
 
-    // penjelasan: Fungsi ini mengecek apakah user memiliki role super_admin.
-    // penjelasan: Fungsi ini bisa dipanggil dengan auth()->user()->isSuperAdmin().
+    // penjelasan: Relasi ini menghubungkan satu user dengan satu data pegawai.
+    // penjelasan: Relasi ini dipakai untuk akun guru dan staff yang wajib punya data pegawai.
+    // penjelasan: Dipanggil misalnya dengan auth()->user()->pegawai.
+    public function pegawai()
+    {
+        return $this->hasOne(Pegawai::class);
+    }
+
+    // penjelasan: Fungsi ini mengecek apakah user adalah super admin.
     public function isSuperAdmin(): bool
     {
         return $this->role === 'super_admin';
     }
 
-    // penjelasan: Fungsi ini mengecek apakah user memiliki role admin.
+    // penjelasan: Fungsi ini mengecek apakah user adalah admin.
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
     }
 
-    // penjelasan: Fungsi ini mengecek apakah user memiliki role guru.
+    // penjelasan: Fungsi ini mengecek apakah user adalah guru.
     public function isGuru(): bool
     {
         return $this->role === 'guru';
     }
 
-    // penjelasan: Fungsi ini mengecek apakah user memiliki role staff.
+    // penjelasan: Fungsi ini mengecek apakah user adalah staff.
     public function isStaff(): bool
     {
         return $this->role === 'staff';
     }
 
-    // penjelasan: Fungsi ini mengecek apakah akun user masih aktif.
-    // penjelasan: User dengan status nonaktif tidak boleh login ke sistem.
+    // penjelasan: Fungsi ini mengecek apakah akun user aktif.
     public function isAktif(): bool
     {
         return $this->status === 'aktif';
