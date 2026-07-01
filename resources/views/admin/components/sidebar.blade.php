@@ -85,21 +85,20 @@
 
             <div class="sidebar-section-title">Akademik</div>
 
-            {{-- penjelasan: Menu Tahun Ajaran sudah aktif. --}}
-            {{-- penjelasan: Menu ini digunakan untuk mengatur periode akademik, contoh 2025/2026. --}}
             <a href="{{ route('super-admin.tahun-ajaran.index') }}" class="{{ request()->routeIs('super-admin.tahun-ajaran.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar-range"></i>
                 <span>Tahun Ajaran</span>
             </a>
 
-            {{-- penjelasan: Menu Semester sudah aktif. --}}
-            {{-- penjelasan: Menu ini digunakan untuk mengatur semester ganjil dan genap pada tahun ajaran. --}}
             <a href="{{ route('super-admin.semester.index') }}" class="{{ request()->routeIs('super-admin.semester.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar2-week"></i>
                 <span>Semester</span>
             </a>
 
-            <a href="#">
+            {{-- penjelasan: Menu Jadwal Pelajaran sudah aktif. --}}
+            {{-- penjelasan: Menu ini mengarah ke modul jadwal pelajaran untuk mengatur guru, kelas, mapel, hari, dan jam pelajaran. --}}
+            {{-- penjelasan: request()->routeIs('super-admin.jadwal-pelajaran.*') membuat menu aktif pada halaman daftar, tambah, edit, dan detail jadwal. --}}
+            <a href="{{ route('super-admin.jadwal-pelajaran.index') }}" class="{{ request()->routeIs('super-admin.jadwal-pelajaran.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar-check"></i>
                 <span>Jadwal Pelajaran</span>
             </a>
@@ -196,19 +195,19 @@
 
             <div class="sidebar-section-title">Akademik</div>
 
-            {{-- penjelasan: Menu Tahun Ajaran sudah aktif untuk Admin. --}}
             <a href="{{ route('admin.tahun-ajaran.index') }}" class="{{ request()->routeIs('admin.tahun-ajaran.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar-range"></i>
                 <span>Tahun Ajaran</span>
             </a>
 
-            {{-- penjelasan: Menu Semester sudah aktif untuk Admin. --}}
             <a href="{{ route('admin.semester.index') }}" class="{{ request()->routeIs('admin.semester.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar2-week"></i>
                 <span>Semester</span>
             </a>
 
-            <a href="#">
+            {{-- penjelasan: Menu Jadwal Pelajaran sudah aktif untuk Admin. --}}
+            {{-- penjelasan: Admin dapat mengatur jadwal pelajaran berdasarkan tahun ajaran, semester, kelas, mata pelajaran, guru, hari, dan jam. --}}
+            <a href="{{ route('admin.jadwal-pelajaran.index') }}" class="{{ request()->routeIs('admin.jadwal-pelajaran.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar-check"></i>
                 <span>Jadwal Pelajaran</span>
             </a>
