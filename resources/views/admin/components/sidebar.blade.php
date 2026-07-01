@@ -78,9 +78,6 @@
                 <span>Data Kelas</span>
             </a>
 
-            {{-- penjelasan: Menu Mata Pelajaran sudah aktif. --}}
-            {{-- penjelasan: Menu ini dipakai untuk mengelola daftar mata pelajaran seperti MTK, IPA, IPS, dan Bahasa Indonesia. --}}
-            {{-- penjelasan: request()->routeIs('super-admin.mata-pelajaran.*') membuat menu aktif di halaman index, create, edit, dan show. --}}
             <a href="{{ route('super-admin.mata-pelajaran.index') }}" class="{{ request()->routeIs('super-admin.mata-pelajaran.*') ? 'active' : '' }}">
                 <i class="bi bi-book"></i>
                 <span>Mata Pelajaran</span>
@@ -88,12 +85,16 @@
 
             <div class="sidebar-section-title">Akademik</div>
 
-            <a href="#">
+            {{-- penjelasan: Menu Tahun Ajaran sudah aktif. --}}
+            {{-- penjelasan: Menu ini digunakan untuk mengatur periode akademik, contoh 2025/2026. --}}
+            <a href="{{ route('super-admin.tahun-ajaran.index') }}" class="{{ request()->routeIs('super-admin.tahun-ajaran.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar-range"></i>
                 <span>Tahun Ajaran</span>
             </a>
 
-            <a href="#">
+            {{-- penjelasan: Menu Semester sudah aktif. --}}
+            {{-- penjelasan: Menu ini digunakan untuk mengatur semester ganjil dan genap pada tahun ajaran. --}}
+            <a href="{{ route('super-admin.semester.index') }}" class="{{ request()->routeIs('super-admin.semester.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar2-week"></i>
                 <span>Semester</span>
             </a>
@@ -188,8 +189,6 @@
                 <span>Data Kelas</span>
             </a>
 
-            {{-- penjelasan: Menu Mata Pelajaran sudah aktif untuk Admin. --}}
-            {{-- penjelasan: Admin dapat mengelola mata pelajaran untuk kebutuhan jadwal dan nilai. --}}
             <a href="{{ route('admin.mata-pelajaran.index') }}" class="{{ request()->routeIs('admin.mata-pelajaran.*') ? 'active' : '' }}">
                 <i class="bi bi-book"></i>
                 <span>Mata Pelajaran</span>
@@ -197,12 +196,14 @@
 
             <div class="sidebar-section-title">Akademik</div>
 
-            <a href="#">
+            {{-- penjelasan: Menu Tahun Ajaran sudah aktif untuk Admin. --}}
+            <a href="{{ route('admin.tahun-ajaran.index') }}" class="{{ request()->routeIs('admin.tahun-ajaran.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar-range"></i>
                 <span>Tahun Ajaran</span>
             </a>
 
-            <a href="#">
+            {{-- penjelasan: Menu Semester sudah aktif untuk Admin. --}}
+            <a href="{{ route('admin.semester.index') }}" class="{{ request()->routeIs('admin.semester.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar2-week"></i>
                 <span>Semester</span>
             </a>

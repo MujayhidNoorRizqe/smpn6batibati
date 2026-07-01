@@ -3,38 +3,36 @@
 // penjelasan: File ini mengatur semua route atau URL aplikasi.
 // penjelasan: Route adalah jalur alamat yang dibuka user di browser.
 // penjelasan: Contoh route: /login, /super-admin/dashboard, /super-admin/pegawai, /super-admin/murid.
-// penjelasan: File ini sekarang mengatur route public, login, logout, dashboard, manajemen user, data pegawai, data kelas, data wali murid, data murid, dan mata pelajaran.
+// penjelasan: File ini sekarang mengatur route public, login, logout, dashboard, manajemen user, data pegawai, data kelas, data wali murid, data murid, mata pelajaran, tahun ajaran, dan semester.
 
 use App\Http\Controllers\Admin\KelasController;
 // penjelasan: KelasController digunakan untuk modul Data Kelas.
-// penjelasan: Controller ini menangani daftar kelas, tambah kelas, edit kelas, detail kelas, dan aktif/nonaktif kelas.
 
 use App\Http\Controllers\Admin\MataPelajaranController;
 // penjelasan: MataPelajaranController digunakan untuk modul Data Mata Pelajaran.
-// penjelasan: Controller ini menangani daftar mata pelajaran, tambah, edit, detail, dan aktif/nonaktif mata pelajaran.
-// penjelasan: Data mata pelajaran nanti digunakan untuk Jadwal Pelajaran dan Nilai Murid.
 
 use App\Http\Controllers\Admin\MuridController;
 // penjelasan: MuridController digunakan untuk modul Data Murid.
-// penjelasan: Controller ini menangani daftar murid, tambah murid, edit murid, detail murid, upload foto murid, dan aktif/nonaktif murid.
-// penjelasan: Modul Data Murid membutuhkan data kelas dan data wali murid.
 
 use App\Http\Controllers\Admin\PegawaiController;
 // penjelasan: PegawaiController digunakan untuk modul Data Pegawai.
-// penjelasan: Controller ini menangani data guru dan staff.
+
+use App\Http\Controllers\Admin\SemesterController;
+// penjelasan: SemesterController digunakan untuk modul Semester.
+// penjelasan: Controller ini mengatur daftar semester, tambah, edit, detail, dan aktif/nonaktif semester.
+
+use App\Http\Controllers\Admin\TahunAjaranController;
+// penjelasan: TahunAjaranController digunakan untuk modul Tahun Ajaran.
+// penjelasan: Controller ini mengatur daftar tahun ajaran, tambah, edit, detail, dan aktif/nonaktif tahun ajaran.
 
 use App\Http\Controllers\Admin\WaliMuridController;
 // penjelasan: WaliMuridController digunakan untuk modul Data Wali Murid.
-// penjelasan: Controller ini menangani data orang tua/wali murid.
-// penjelasan: Route wali murid dipakai sebelum membuat Data Murid karena murid harus dihubungkan ke wali murid.
 
 use App\Http\Controllers\Auth\LoginController;
 // penjelasan: LoginController digunakan untuk fitur login dan logout.
-// penjelasan: Controller ini menampilkan halaman login, memproses login, dan memproses logout.
 
 use App\Http\Controllers\SuperAdmin\UserController;
 // penjelasan: UserController digunakan untuk fitur Manajemen User oleh Super Admin.
-// penjelasan: Controller ini menangani tambah user, edit user, reset password, dan aktif/nonaktif akun.
 
 use Illuminate\Support\Facades\Route;
 // penjelasan: Route adalah facade bawaan Laravel untuk mendefinisikan URL aplikasi.
@@ -183,26 +181,65 @@ Route::middleware(['auth', 'role:super_admin'])
         // DATA MATA PELAJARAN
         // =================================================
 
-        // penjelasan: Route GET /super-admin/mata-pelajaran digunakan untuk menampilkan daftar mata pelajaran.
         Route::get('/mata-pelajaran', [MataPelajaranController::class, 'index'])->name('mata-pelajaran.index');
-
-        // penjelasan: Route GET /super-admin/mata-pelajaran/create digunakan untuk menampilkan form tambah mata pelajaran.
         Route::get('/mata-pelajaran/create', [MataPelajaranController::class, 'create'])->name('mata-pelajaran.create');
-
-        // penjelasan: Route POST /super-admin/mata-pelajaran digunakan untuk menyimpan data mata pelajaran baru.
         Route::post('/mata-pelajaran', [MataPelajaranController::class, 'store'])->name('mata-pelajaran.store');
-
-        // penjelasan: Route GET /super-admin/mata-pelajaran/{mataPelajaran} digunakan untuk menampilkan detail mata pelajaran.
         Route::get('/mata-pelajaran/{mataPelajaran}', [MataPelajaranController::class, 'show'])->name('mata-pelajaran.show');
-
-        // penjelasan: Route GET /super-admin/mata-pelajaran/{mataPelajaran}/edit digunakan untuk menampilkan form edit mata pelajaran.
         Route::get('/mata-pelajaran/{mataPelajaran}/edit', [MataPelajaranController::class, 'edit'])->name('mata-pelajaran.edit');
-
-        // penjelasan: Route PUT /super-admin/mata-pelajaran/{mataPelajaran} digunakan untuk menyimpan perubahan data mata pelajaran.
         Route::put('/mata-pelajaran/{mataPelajaran}', [MataPelajaranController::class, 'update'])->name('mata-pelajaran.update');
-
-        // penjelasan: Route PATCH ini digunakan untuk mengubah status mata pelajaran aktif/nonaktif.
         Route::patch('/mata-pelajaran/{mataPelajaran}/toggle-status', [MataPelajaranController::class, 'toggleStatus'])->name('mata-pelajaran.toggle-status');
+
+
+        // =================================================
+        // TAHUN AJARAN
+        // =================================================
+
+        // penjelasan: Route GET /super-admin/tahun-ajaran digunakan untuk menampilkan daftar tahun ajaran.
+        Route::get('/tahun-ajaran', [TahunAjaranController::class, 'index'])->name('tahun-ajaran.index');
+
+        // penjelasan: Route GET /super-admin/tahun-ajaran/create digunakan untuk menampilkan form tambah tahun ajaran.
+        Route::get('/tahun-ajaran/create', [TahunAjaranController::class, 'create'])->name('tahun-ajaran.create');
+
+        // penjelasan: Route POST /super-admin/tahun-ajaran digunakan untuk menyimpan data tahun ajaran baru.
+        Route::post('/tahun-ajaran', [TahunAjaranController::class, 'store'])->name('tahun-ajaran.store');
+
+        // penjelasan: Route GET /super-admin/tahun-ajaran/{tahunAjaran} digunakan untuk menampilkan detail tahun ajaran.
+        Route::get('/tahun-ajaran/{tahunAjaran}', [TahunAjaranController::class, 'show'])->name('tahun-ajaran.show');
+
+        // penjelasan: Route GET /super-admin/tahun-ajaran/{tahunAjaran}/edit digunakan untuk menampilkan form edit tahun ajaran.
+        Route::get('/tahun-ajaran/{tahunAjaran}/edit', [TahunAjaranController::class, 'edit'])->name('tahun-ajaran.edit');
+
+        // penjelasan: Route PUT /super-admin/tahun-ajaran/{tahunAjaran} digunakan untuk menyimpan perubahan tahun ajaran.
+        Route::put('/tahun-ajaran/{tahunAjaran}', [TahunAjaranController::class, 'update'])->name('tahun-ajaran.update');
+
+        // penjelasan: Route PATCH ini digunakan untuk mengubah status tahun ajaran aktif/nonaktif.
+        Route::patch('/tahun-ajaran/{tahunAjaran}/toggle-status', [TahunAjaranController::class, 'toggleStatus'])->name('tahun-ajaran.toggle-status');
+
+
+        // =================================================
+        // SEMESTER
+        // =================================================
+
+        // penjelasan: Route GET /super-admin/semester digunakan untuk menampilkan daftar semester.
+        Route::get('/semester', [SemesterController::class, 'index'])->name('semester.index');
+
+        // penjelasan: Route GET /super-admin/semester/create digunakan untuk menampilkan form tambah semester.
+        Route::get('/semester/create', [SemesterController::class, 'create'])->name('semester.create');
+
+        // penjelasan: Route POST /super-admin/semester digunakan untuk menyimpan data semester baru.
+        Route::post('/semester', [SemesterController::class, 'store'])->name('semester.store');
+
+        // penjelasan: Route GET /super-admin/semester/{semester} digunakan untuk menampilkan detail semester.
+        Route::get('/semester/{semester}', [SemesterController::class, 'show'])->name('semester.show');
+
+        // penjelasan: Route GET /super-admin/semester/{semester}/edit digunakan untuk menampilkan form edit semester.
+        Route::get('/semester/{semester}/edit', [SemesterController::class, 'edit'])->name('semester.edit');
+
+        // penjelasan: Route PUT /super-admin/semester/{semester} digunakan untuk menyimpan perubahan semester.
+        Route::put('/semester/{semester}', [SemesterController::class, 'update'])->name('semester.update');
+
+        // penjelasan: Route PATCH ini digunakan untuk mengubah status semester aktif/nonaktif.
+        Route::patch('/semester/{semester}/toggle-status', [SemesterController::class, 'toggleStatus'])->name('semester.toggle-status');
     });
 
 
@@ -280,26 +317,65 @@ Route::middleware(['auth', 'role:admin'])
         // DATA MATA PELAJARAN
         // =================================================
 
-        // penjelasan: Route GET /admin/mata-pelajaran digunakan untuk menampilkan daftar mata pelajaran.
         Route::get('/mata-pelajaran', [MataPelajaranController::class, 'index'])->name('mata-pelajaran.index');
-
-        // penjelasan: Route GET /admin/mata-pelajaran/create digunakan untuk menampilkan form tambah mata pelajaran.
         Route::get('/mata-pelajaran/create', [MataPelajaranController::class, 'create'])->name('mata-pelajaran.create');
-
-        // penjelasan: Route POST /admin/mata-pelajaran digunakan untuk menyimpan data mata pelajaran baru.
         Route::post('/mata-pelajaran', [MataPelajaranController::class, 'store'])->name('mata-pelajaran.store');
-
-        // penjelasan: Route GET /admin/mata-pelajaran/{mataPelajaran} digunakan untuk menampilkan detail mata pelajaran.
         Route::get('/mata-pelajaran/{mataPelajaran}', [MataPelajaranController::class, 'show'])->name('mata-pelajaran.show');
-
-        // penjelasan: Route GET /admin/mata-pelajaran/{mataPelajaran}/edit digunakan untuk menampilkan form edit mata pelajaran.
         Route::get('/mata-pelajaran/{mataPelajaran}/edit', [MataPelajaranController::class, 'edit'])->name('mata-pelajaran.edit');
-
-        // penjelasan: Route PUT /admin/mata-pelajaran/{mataPelajaran} digunakan untuk menyimpan perubahan data mata pelajaran.
         Route::put('/mata-pelajaran/{mataPelajaran}', [MataPelajaranController::class, 'update'])->name('mata-pelajaran.update');
-
-        // penjelasan: Route PATCH ini digunakan untuk mengubah status mata pelajaran aktif/nonaktif.
         Route::patch('/mata-pelajaran/{mataPelajaran}/toggle-status', [MataPelajaranController::class, 'toggleStatus'])->name('mata-pelajaran.toggle-status');
+
+
+        // =================================================
+        // TAHUN AJARAN
+        // =================================================
+
+        // penjelasan: Route GET /admin/tahun-ajaran digunakan untuk menampilkan daftar tahun ajaran.
+        Route::get('/tahun-ajaran', [TahunAjaranController::class, 'index'])->name('tahun-ajaran.index');
+
+        // penjelasan: Route GET /admin/tahun-ajaran/create digunakan untuk menampilkan form tambah tahun ajaran.
+        Route::get('/tahun-ajaran/create', [TahunAjaranController::class, 'create'])->name('tahun-ajaran.create');
+
+        // penjelasan: Route POST /admin/tahun-ajaran digunakan untuk menyimpan data tahun ajaran baru.
+        Route::post('/tahun-ajaran', [TahunAjaranController::class, 'store'])->name('tahun-ajaran.store');
+
+        // penjelasan: Route GET /admin/tahun-ajaran/{tahunAjaran} digunakan untuk menampilkan detail tahun ajaran.
+        Route::get('/tahun-ajaran/{tahunAjaran}', [TahunAjaranController::class, 'show'])->name('tahun-ajaran.show');
+
+        // penjelasan: Route GET /admin/tahun-ajaran/{tahunAjaran}/edit digunakan untuk menampilkan form edit tahun ajaran.
+        Route::get('/tahun-ajaran/{tahunAjaran}/edit', [TahunAjaranController::class, 'edit'])->name('tahun-ajaran.edit');
+
+        // penjelasan: Route PUT /admin/tahun-ajaran/{tahunAjaran} digunakan untuk menyimpan perubahan tahun ajaran.
+        Route::put('/tahun-ajaran/{tahunAjaran}', [TahunAjaranController::class, 'update'])->name('tahun-ajaran.update');
+
+        // penjelasan: Route PATCH ini digunakan untuk mengubah status tahun ajaran aktif/nonaktif.
+        Route::patch('/tahun-ajaran/{tahunAjaran}/toggle-status', [TahunAjaranController::class, 'toggleStatus'])->name('tahun-ajaran.toggle-status');
+
+
+        // =================================================
+        // SEMESTER
+        // =================================================
+
+        // penjelasan: Route GET /admin/semester digunakan untuk menampilkan daftar semester.
+        Route::get('/semester', [SemesterController::class, 'index'])->name('semester.index');
+
+        // penjelasan: Route GET /admin/semester/create digunakan untuk menampilkan form tambah semester.
+        Route::get('/semester/create', [SemesterController::class, 'create'])->name('semester.create');
+
+        // penjelasan: Route POST /admin/semester digunakan untuk menyimpan data semester baru.
+        Route::post('/semester', [SemesterController::class, 'store'])->name('semester.store');
+
+        // penjelasan: Route GET /admin/semester/{semester} digunakan untuk menampilkan detail semester.
+        Route::get('/semester/{semester}', [SemesterController::class, 'show'])->name('semester.show');
+
+        // penjelasan: Route GET /admin/semester/{semester}/edit digunakan untuk menampilkan form edit semester.
+        Route::get('/semester/{semester}/edit', [SemesterController::class, 'edit'])->name('semester.edit');
+
+        // penjelasan: Route PUT /admin/semester/{semester} digunakan untuk menyimpan perubahan semester.
+        Route::put('/semester/{semester}', [SemesterController::class, 'update'])->name('semester.update');
+
+        // penjelasan: Route PATCH ini digunakan untuk mengubah status semester aktif/nonaktif.
+        Route::patch('/semester/{semester}/toggle-status', [SemesterController::class, 'toggleStatus'])->name('semester.toggle-status');
     });
 
 
