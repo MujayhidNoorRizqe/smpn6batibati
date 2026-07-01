@@ -1,0 +1,388 @@
+/* penjelasan: File ini adalah CSS utama untuk dashboard admin/internal. */
+/* penjelasan: File ini dipanggil dari resources/views/admin/layouts/app.blade.php. */
+/* penjelasan: CSS ini mengatur sidebar fixed, sidebar scroll sendiri, topbar, konten, card, footer, dan tombol scroll up. */
+/* penjelasan: File ini tidak memakai preprocessor seperti Sass atau Less, hanya CSS biasa. */
+
+:root {
+    /* penjelasan: Variabel CSS digunakan agar warna dan ukuran mudah diubah dari satu tempat. */
+    --sidebar-width: 270px;
+    --topbar-height: 70px;
+    --primary-color: #0d6efd;
+    --sidebar-bg: #0f172a;
+    --sidebar-bg-soft: #1e293b;
+    --sidebar-text: #cbd5e1;
+    --sidebar-muted: #94a3b8;
+    --body-bg: #f5f6fa;
+    --card-bg: #ffffff;
+    --border-color: #e5e7eb;
+    --text-dark: #1f2937;
+    --text-muted: #6b7280;
+}
+
+/* penjelasan: Mengatur dasar body agar background dashboard konsisten. */
+body {
+    min-height: 100vh;
+    background-color: var(--body-bg);
+    color: var(--text-dark);
+}
+
+/* penjelasan: admin-wrapper adalah pembungkus utama dashboard. */
+.admin-wrapper {
+    min-height: 100vh;
+}
+
+/* penjelasan: admin-sidebar adalah sidebar kiri dashboard. */
+/* penjelasan: position fixed membuat sidebar tidak ikut bergerak saat halaman utama discroll. */
+/* penjelasan: overflow-y auto membuat sidebar bisa discroll sendiri jika menu panjang. */
+.admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--sidebar-width);
+    height: 100vh;
+    background-color: var(--sidebar-bg);
+    color: #ffffff;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1000;
+}
+
+/* penjelasan: Mengatur scrollbar sidebar agar lebih kecil dan rapi. */
+.admin-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-sidebar::-webkit-scrollbar-track {
+    background-color: var(--sidebar-bg);
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb {
+    background-color: #334155;
+    border-radius: 10px;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb:hover {
+    background-color: #475569;
+}
+
+/* penjelasan: sidebar-brand adalah bagian atas sidebar yang menampilkan nama sekolah/sistem. */
+.sidebar-brand {
+    min-height: var(--topbar-height);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* penjelasan: brand-logo adalah kotak icon sekolah di sidebar. */
+.brand-logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background-color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+/* penjelasan: Judul brand sekolah. */
+.brand-title {
+    font-size: 16px;
+    line-height: 1.2;
+    margin: 0;
+}
+
+/* penjelasan: Subtitle kecil brand. */
+.brand-subtitle {
+    color: var(--sidebar-muted);
+    font-size: 12px;
+}
+
+/* penjelasan: sidebar-user menampilkan user aktif di sidebar. */
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px;
+    padding: 14px;
+    border-radius: 14px;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* penjelasan: user-avatar menampilkan huruf awal nama user. */
+.user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    color: var(--sidebar-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+/* penjelasan: user-info diberi min-width 0 agar teks panjang tidak merusak layout. */
+.user-info {
+    min-width: 0;
+}
+
+/* penjelasan: user-name menampilkan nama user. */
+.user-name {
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* penjelasan: user-role menampilkan role user. */
+.user-role {
+    color: var(--sidebar-muted);
+    font-size: 12px;
+}
+
+/* penjelasan: sidebar-menu adalah area daftar menu. */
+.sidebar-menu {
+    padding: 0 14px 20px;
+}
+
+/* penjelasan: sidebar-section-title adalah judul kelompok menu, seperti Utama, Akademik, Absensi. */
+.sidebar-section-title {
+    color: var(--sidebar-muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin: 18px 10px 8px;
+}
+
+/* penjelasan: Link menu sidebar. */
+.sidebar-menu a {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    padding: 10px 12px;
+    border-radius: 10px;
+    margin-bottom: 4px;
+    font-size: 14px;
+    transition: 0.2s ease;
+}
+
+/* penjelasan: Icon pada menu sidebar. */
+.sidebar-menu a i {
+    width: 20px;
+    font-size: 16px;
+}
+
+/* penjelasan: Efek hover dan menu aktif. */
+.sidebar-menu a:hover,
+.sidebar-menu a.active {
+    background-color: var(--sidebar-bg-soft);
+    color: #ffffff;
+}
+
+/* penjelasan: admin-main adalah area konten kanan. */
+/* penjelasan: margin-left dibuat sama dengan lebar sidebar agar konten tidak tertutup sidebar fixed. */
+.admin-main {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* penjelasan: admin-topbar adalah header atas area konten. */
+/* penjelasan: sticky membuat topbar tetap terlihat di atas saat konten discroll. */
+.admin-topbar {
+    height: var(--topbar-height);
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+}
+
+/* penjelasan: Judul halaman pada topbar. */
+.topbar-title {
+    margin: 0;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+/* penjelasan: Subtitle kecil pada topbar. */
+.topbar-subtitle {
+    color: var(--text-muted);
+}
+
+/* penjelasan: topbar-right adalah bagian kanan topbar. */
+.topbar-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+/* penjelasan: Informasi user di topbar. */
+.topbar-user {
+    text-align: right;
+    line-height: 1.2;
+}
+
+/* penjelasan: Nama user di topbar. */
+.topbar-user-name {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* penjelasan: Role user di topbar. */
+.topbar-user-role {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* penjelasan: Badge status akun. */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* penjelasan: Warna badge untuk status aktif. */
+.status-aktif {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+/* penjelasan: Warna badge untuk status nonaktif. */
+.status-nonaktif {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* penjelasan: admin-content adalah area isi halaman. */
+.admin-content {
+    flex: 1;
+    padding: 24px;
+}
+
+/* penjelasan: Tampilan card dashboard dibuat lebih halus. */
+.card {
+    border-radius: 14px;
+}
+
+/* penjelasan: shadow-sm bawaan Bootstrap dibuat tetap lembut. */
+.shadow-sm {
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* penjelasan: admin-footer adalah footer kecil di bawah dashboard. */
+.admin-footer {
+    padding: 14px 24px;
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid var(--border-color);
+    background-color: #ffffff;
+}
+
+/* penjelasan: scroll-up-btn adalah tombol melayang untuk kembali ke atas halaman. */
+/* penjelasan: Tombol ini disembunyikan dulu dengan opacity 0 dan visibility hidden. */
+/* penjelasan: Nanti admin.js akan menambahkan class show saat halaman discroll. */
+.scroll-up-btn {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 22px rgba(13, 110, 253, 0.28);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+    transition: 0.2s ease;
+    z-index: 1100;
+}
+
+/* penjelasan: Class show membuat tombol scroll up tampil. */
+.scroll-up-btn.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+/* penjelasan: Efek hover tombol scroll up. */
+.scroll-up-btn:hover {
+    background-color: #0b5ed7;
+}
+
+/* penjelasan: Responsive untuk layar tablet dan HP. */
+@media (max-width: 991px) {
+    /* penjelasan: Di layar kecil, sidebar tidak fixed agar tampilan tidak sempit. */
+    .admin-sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        max-height: 360px;
+    }
+
+    /* penjelasan: Area utama tidak perlu margin kiri saat sidebar berada di atas. */
+    .admin-main {
+        margin-left: 0;
+    }
+
+    /* penjelasan: Wrapper berubah menjadi satu kolom. */
+    .admin-wrapper {
+        display: block;
+    }
+
+    /* penjelasan: Topbar dibuat lebih fleksibel di layar kecil. */
+    .admin-topbar {
+        height: auto;
+        min-height: var(--topbar-height);
+        padding: 14px 18px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .topbar-right {
+        width: 100%;
+        justify-content: space-between;
+        margin-left: 0;
+    }
+}
+
+/* penjelasan: Responsive untuk layar HP kecil. */
+@media (max-width: 576px) {
+    .admin-content {
+        padding: 16px;
+    }
+
+    .admin-footer {
+        flex-direction: column;
+        gap: 4px;
+        padding: 14px 16px;
+    }
+
+    .scroll-up-btn {
+        right: 16px;
+        bottom: 16px;
+    }
+}

@@ -1,36 +1,43 @@
 {{-- penjelasan: File ini adalah component topbar dashboard. --}}
-{{-- penjelasan: File ini dipanggil oleh resources/views/admin/layouts/app.blade.php. --}}
-{{-- penjelasan: Topbar menampilkan nama user, role, dan tombol logout. --}}
+{{-- penjelasan: File ini dipanggil oleh layout utama admin.layouts.app. --}}
+{{-- penjelasan: Topbar menampilkan judul halaman, nama user, role, status akun, dan tombol logout. --}}
 
 @php
-    // penjelasan: Variabel user digunakan untuk menyimpan data user yang sedang login.
+    // penjelasan: Mengambil user yang sedang login.
     $user = auth()->user();
 
-    // penjelasan: Variabel roleLabel digunakan untuk menampilkan role agar lebih enak dibaca.
-    // penjelasan: Contoh super_admin diubah menjadi Super Admin.
+    // penjelasan: Mengubah role dari format database menjadi format tampilan.
+    // penjelasan: Contoh super_admin menjadi Super Admin.
     $roleLabel = $user ? ucwords(str_replace('_', ' ', $user->role)) : '-';
+
+    // penjelasan: Mengambil status akun user.
+    $status = $user->status ?? '-';
 @endphp
 
-<nav class="topbar d-flex align-items-center px-4">
+<header class="admin-topbar">
 
-    {{-- penjelasan: Bagian kiri topbar menampilkan judul halaman dari @yield('title'). --}}
     <div>
-        <h6 class="mb-0 fw-bold">@yield('title', 'Dashboard')</h6>
-        <small class="text-muted">Sistem Informasi Akademik SMPN 6 Bati-Bati</small>
+        {{-- penjelasan: Judul halaman diambil dari @section('title') pada file halaman. --}}
+        <h5 class="topbar-title">@yield('title', 'Dashboard')</h5>
+
+        {{-- penjelasan: Subtitle topbar menjelaskan nama sistem. --}}
+        <small class="topbar-subtitle">Sistem Informasi Akademik SMPN 6 Bati-Bati</small>
     </div>
 
-    {{-- penjelasan: Bagian kanan topbar menampilkan data user dan tombol logout. --}}
-    <div class="ms-auto d-flex align-items-center gap-3">
+    <div class="topbar-right">
 
-        <div class="text-end d-none d-md-block">
-            {{-- penjelasan: Menampilkan nama user yang sedang login. --}}
-            <div class="fw-semibold small">{{ $user->name ?? 'User' }}</div>
+        {{-- penjelasan: Badge status menampilkan apakah akun aktif atau nonaktif. --}}
+        <span class="status-badge status-{{ $status }}">
+            {{ ucfirst($status) }}
+        </span>
 
-            {{-- penjelasan: Menampilkan role user yang sedang login. --}}
-            <div class="text-muted small">{{ $roleLabel }}</div>
+        {{-- penjelasan: Bagian ini menampilkan nama dan role user. --}}
+        <div class="topbar-user d-none d-md-block">
+            <div class="topbar-user-name">{{ $user->name ?? 'User' }}</div>
+            <div class="topbar-user-role">{{ $roleLabel }}</div>
         </div>
 
-        {{-- penjelasan: Form logout mengirim request ke route logout. --}}
+        {{-- penjelasan: Form logout dikirim ke route logout. --}}
         {{-- penjelasan: Route logout memanggil LoginController method logout(). --}}
         <form action="{{ route('logout') }}" method="POST" class="mb-0">
 
@@ -38,9 +45,10 @@
             @csrf
 
             <button type="submit" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-box-arrow-right"></i>
                 Logout
             </button>
         </form>
 
     </div>
-</nav>
+</header>
