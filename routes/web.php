@@ -1,7 +1,10 @@
 <?php
 
 // penjelasan: File ini mengatur semua route atau URL aplikasi.
-// penjelasan: Route public, login, dashboard, manajemen user, dan data pegawai diatur di file ini.
+// penjelasan: Route public, login, dashboard, manajemen user, data pegawai, dan data kelas diatur di file ini.
+
+use App\Http\Controllers\Admin\KelasController;
+// penjelasan: KelasController digunakan untuk modul Data Kelas.
 
 use App\Http\Controllers\Admin\PegawaiController;
 // penjelasan: PegawaiController digunakan untuk modul Data Pegawai.
@@ -60,6 +63,15 @@ Route::middleware(['auth', 'role:super_admin'])
         Route::put('/pegawai/{pegawai}', [PegawaiController::class, 'update'])->name('pegawai.update');
         Route::patch('/pegawai/{pegawai}/toggle-status', [PegawaiController::class, 'toggleStatus'])->name('pegawai.toggle-status');
         // penjelasan: Route data pegawai untuk super admin.
+
+        Route::get('/kelas', [KelasController::class, 'index'])->name('kelas.index');
+        Route::get('/kelas/create', [KelasController::class, 'create'])->name('kelas.create');
+        Route::post('/kelas', [KelasController::class, 'store'])->name('kelas.store');
+        Route::get('/kelas/{kelas}', [KelasController::class, 'show'])->name('kelas.show');
+        Route::get('/kelas/{kelas}/edit', [KelasController::class, 'edit'])->name('kelas.edit');
+        Route::put('/kelas/{kelas}', [KelasController::class, 'update'])->name('kelas.update');
+        Route::patch('/kelas/{kelas}/toggle-status', [KelasController::class, 'toggleStatus'])->name('kelas.toggle-status');
+        // penjelasan: Route data kelas untuk super admin.
     });
 
 Route::middleware(['auth', 'role:admin'])
@@ -79,6 +91,15 @@ Route::middleware(['auth', 'role:admin'])
         Route::put('/pegawai/{pegawai}', [PegawaiController::class, 'update'])->name('pegawai.update');
         Route::patch('/pegawai/{pegawai}/toggle-status', [PegawaiController::class, 'toggleStatus'])->name('pegawai.toggle-status');
         // penjelasan: Route data pegawai untuk admin.
+
+        Route::get('/kelas', [KelasController::class, 'index'])->name('kelas.index');
+        Route::get('/kelas/create', [KelasController::class, 'create'])->name('kelas.create');
+        Route::post('/kelas', [KelasController::class, 'store'])->name('kelas.store');
+        Route::get('/kelas/{kelas}', [KelasController::class, 'show'])->name('kelas.show');
+        Route::get('/kelas/{kelas}/edit', [KelasController::class, 'edit'])->name('kelas.edit');
+        Route::put('/kelas/{kelas}', [KelasController::class, 'update'])->name('kelas.update');
+        Route::patch('/kelas/{kelas}/toggle-status', [KelasController::class, 'toggleStatus'])->name('kelas.toggle-status');
+        // penjelasan: Route data kelas untuk admin.
     });
 
 Route::middleware(['auth', 'role:guru'])

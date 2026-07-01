@@ -73,7 +73,7 @@
                 <span>Data Wali Murid</span>
             </a>
 
-            <a href="#">
+            <a href="{{ route('super-admin.kelas.index') }}" class="{{ request()->routeIs('super-admin.kelas.*') ? 'active' : '' }}">
                 <i class="bi bi-building"></i>
                 <span>Data Kelas</span>
             </a>
@@ -182,7 +182,7 @@
                 <span>Data Wali Murid</span>
             </a>
 
-            <a href="#">
+            <a href="{{ route('admin.kelas.index') }}" class="{{ request()->routeIs('admin.kelas.*') ? 'active' : '' }}">
                 <i class="bi bi-building"></i>
                 <span>Data Kelas</span>
             </a>

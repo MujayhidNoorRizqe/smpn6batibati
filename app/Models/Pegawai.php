@@ -3,6 +3,7 @@
 // penjelasan: File ini adalah Model Pegawai.
 // penjelasan: Model Pegawai digunakan untuk berhubungan dengan tabel pegawais.
 // penjelasan: Tabel pegawais menyimpan data guru dan staff.
+// penjelasan: Model ini juga memiliki relasi ke User dan Kelas.
 
 namespace App\Models;
 
@@ -41,8 +42,16 @@ class Pegawai extends Model
         return $this->belongsTo(User::class);
     }
 
+    // penjelasan: Relasi ini digunakan untuk mengambil kelas yang wali kelasnya adalah pegawai ini.
+    // penjelasan: Satu guru bisa menjadi wali untuk satu atau beberapa kelas sesuai kebutuhan sistem.
+    // penjelasan: Relasi ini dipanggil misalnya $pegawai->kelasWali.
+    public function kelasWali()
+    {
+        return $this->hasMany(Kelas::class, 'wali_kelas_id');
+    }
+
     // penjelasan: Fungsi ini mengecek apakah data pegawai adalah guru.
-    // penjelasan: Guru nanti bisa digunakan pada jadwal pelajaran, absen murid, dan input nilai.
+    // penjelasan: Guru nanti bisa digunakan pada jadwal pelajaran, absen murid, input nilai, dan wali kelas.
     public function isGuru(): bool
     {
         return $this->jenis_pegawai === 'guru';
