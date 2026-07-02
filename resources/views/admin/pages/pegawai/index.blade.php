@@ -3,6 +3,8 @@
 {{-- penjelasan: Halaman ini bisa diakses oleh Super Admin dan Admin. --}}
 {{-- penjelasan: Data $pegawais dikirim dari controller menggunakan compact('pegawais', 'routePrefix'). --}}
 {{-- penjelasan: routePrefix dipakai agar link bisa menyesuaikan apakah user login sebagai super-admin atau admin. --}}
+{{-- penjelasan: Alert berhasil, gagal, dan validasi sudah memakai komponen global admin.components.alert. --}}
+{{-- penjelasan: Tombol aktif/nonaktif memakai modal konfirmasi global melalui data-confirm="true". --}}
 
 @extends('admin.layouts.app')
 
@@ -30,17 +32,13 @@
         </div>
     </div>
 
-    @if (session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @endif
-
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <form action="{{ route($routePrefix . '.pegawai.index') }}" method="GET" class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">Cari Pegawai</label>
+                    <label class="form-label">
+                        Cari Pegawai
+
                     <input
                         type="text"
                         name="search"
@@ -51,7 +49,10 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Jenis Pegawai</label>
+                    <label class="form-label">
+                        Jenis Pegawai
+                    </label>
+
                     <select name="jenis_pegawai" class="form-select">
                         <option value="">Semua Jenis</option>
                         <option value="guru" {{ request('jenis_pegawai') === 'guru' ? 'selected' : '' }}>Guru</option>
@@ -60,7 +61,10 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Status</label>
+                    <label class="form-label">
+                        Status
+                    </label>
+
                     <select name="status" class="form-select">
                         <option value="">Semua Status</option>
                         <option value="aktif" {{ request('status') === 'aktif' ? 'selected' : '' }}>Aktif</option>
@@ -107,6 +111,13 @@
 
                     <tbody>
                         @forelse ($pegawais as $pegawai)
+                            @php
+                                // penjelasan: Pesan konfirmasi dibuat sesuai status pegawai.
+                                $confirmMessage = $pegawai->status === 'aktif'
+                                    ? 'Apakah Anda yakin ingin menonaktifkan pegawai ini? Data tidak dihapus, hanya statusnya menjadi nonaktif.'
+                                    : 'Apakah Anda yakin ingin mengaktifkan pegawai ini kembali?';
+                            @endphp
+
                             <tr>
                                 <td class="fw-semibold">
                                     {{ $pegawai->nama_pegawai }}
@@ -139,9 +150,15 @@
                                 </td>
 
                                 <td>
-                                    <span class="badge {{ $pegawai->status === 'aktif' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
-                                        {{ ucfirst($pegawai->status) }}
-                                    </span>
+                                    @if ($pegawai->status === 'aktif')
+                                        <span class="badge bg-success-subtle text-success">
+                                            Aktif
+                                        </span>
+                                    @else
+                                        <span class="badge bg-danger-subtle text-danger">
+                                            Nonaktif
+                                        </span>
+                                    @endif
                                 </td>
 
                                 <td class="text-end">
@@ -163,7 +180,10 @@
                                             <button
                                                 type="submit"
                                                 class="btn btn-sm action-btn {{ $pegawai->status === 'aktif' ? 'btn-outline-danger' : 'btn-outline-success' }}"
-                                                onclick="return confirm('Yakin ingin mengubah status pegawai ini?')"
+                                                data-confirm="true"
+                                                data-confirm-message="{{ $confirmMessage }}"
+                                                data-confirm-yes="{{ $pegawai->status === 'aktif' ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan' }}"
+                                                data-confirm-yes-class="{{ $pegawai->status === 'aktif' ? 'btn-danger' : 'btn-success' }}"
                                             >
                                                 @if ($pegawai->status === 'aktif')
                                                     <i class="bi bi-person-x"></i>

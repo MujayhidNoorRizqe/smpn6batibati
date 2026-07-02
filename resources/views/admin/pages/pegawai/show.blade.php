@@ -1,6 +1,7 @@
 {{-- penjelasan: File ini adalah halaman detail pegawai. --}}
 {{-- penjelasan: File ini dipanggil oleh PegawaiController method show(). --}}
 {{-- penjelasan: Halaman ini menampilkan data lengkap pegawai dan akun login yang terhubung. --}}
+{{-- penjelasan: Halaman ini tidak memiliki form, sehingga tidak membutuhkan validasi input. --}}
 
 @extends('admin.layouts.app')
 
@@ -10,7 +11,7 @@
 
     <div class="row">
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body text-center">
 
                     @if ($pegawai->foto)
@@ -28,9 +29,15 @@
                     </span>
 
                     <div class="mt-3">
-                        <span class="badge {{ $pegawai->status === 'aktif' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
-                            {{ ucfirst($pegawai->status) }}
-                        </span>
+                        @if ($pegawai->status === 'aktif')
+                            <span class="badge bg-success-subtle text-success">
+                                Aktif
+                            </span>
+                        @else
+                            <span class="badge bg-danger-subtle text-danger">
+                                Nonaktif
+                            </span>
+                        @endif
                     </div>
 
                 </div>
@@ -54,6 +61,11 @@
                     <div class="row mb-3">
                         <div class="col-md-4 text-muted">Nama Pegawai</div>
                         <div class="col-md-8 fw-semibold">{{ $pegawai->nama_pegawai }}</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Jenis Pegawai</div>
+                        <div class="col-md-8 fw-semibold">{{ ucfirst($pegawai->jenis_pegawai) }}</div>
                     </div>
 
                     <div class="row mb-3">
@@ -90,10 +102,20 @@
                         <div class="col-md-4 text-muted">Akun Login</div>
                         <div class="col-md-8 fw-semibold">
                             @if ($pegawai->user)
-                                {{ $pegawai->user->name }} - {{ $pegawai->user->email }}
+                                <div>{{ $pegawai->user->name }}</div>
+                                <small class="text-muted">{{ $pegawai->user->email }}</small>
                             @else
                                 Belum terhubung
                             @endif
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-muted">Dibuat / Diperbarui</div>
+                        <div class="col-md-8 fw-semibold">
+                            {{ $pegawai->created_at ? $pegawai->created_at->format('d-m-Y H:i') : '-' }}
+                            /
+                            {{ $pegawai->updated_at ? $pegawai->updated_at->format('d-m-Y H:i') : '-' }}
                         </div>
                     </div>
 
@@ -103,6 +125,7 @@
                         </a>
 
                         <a href="{{ route($routePrefix . '.pegawai.edit', $pegawai) }}" class="btn btn-primary">
+                            <i class="bi bi-pencil-square me-1"></i>
                             Edit Pegawai
                         </a>
                     </div>

@@ -10,7 +10,7 @@
 
     <div class="row">
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm mb-4">
                 <div class="card-body text-center">
 
                     @if ($murid->foto)
@@ -28,9 +28,15 @@
                     </span>
 
                     <div class="mt-3">
-                        <span class="badge {{ $murid->status === 'aktif' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
-                            {{ ucfirst($murid->status) }}
-                        </span>
+                        @if ($murid->status === 'aktif')
+                            <span class="badge bg-success-subtle text-success">
+                                Aktif
+                            </span>
+                        @else
+                            <span class="badge bg-danger-subtle text-danger">
+                                Nonaktif
+                            </span>
+                        @endif
                     </div>
 
                 </div>
@@ -47,18 +53,15 @@
                 <div class="card-body">
 
                     <div class="row mb-3">
-                        <div class="col-md-4 text-muted">NIS</div>
-                        <div class="col-md-8 fw-semibold">{{ $murid->nis ?? '-' }}</div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-4 text-muted">NISN</div>
-                        <div class="col-md-8 fw-semibold">{{ $murid->nisn ?? '-' }}</div>
-                    </div>
-
-                    <div class="row mb-3">
                         <div class="col-md-4 text-muted">Nama Murid</div>
                         <div class="col-md-8 fw-semibold">{{ $murid->nama_murid }}</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Kelas</div>
+                        <div class="col-md-8 fw-semibold">
+                            {{ $murid->kelas ? $murid->kelas->nama_kelas : '-' }}
+                        </div>
                     </div>
 
                     <div class="row mb-3">
@@ -69,13 +72,25 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-4 text-muted">Tempat/Tanggal Lahir</div>
+                        <div class="col-md-4 text-muted">NIS</div>
+                        <div class="col-md-8 fw-semibold">{{ $murid->nis ?? '-' }}</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">NISN</div>
+                        <div class="col-md-8 fw-semibold">{{ $murid->nisn ?? '-' }}</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Tanggal Lahir</div>
                         <div class="col-md-8 fw-semibold">
-                            {{ $murid->tempat_lahir ?? '-' }}
-                            @if ($murid->tanggal_lahir)
-                                , {{ $murid->tanggal_lahir->format('d-m-Y') }}
-                            @endif
+                            {{ $murid->tanggal_lahir ? $murid->tanggal_lahir->format('d-m-Y') : '-' }}
                         </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">Tempat Lahir</div>
+                        <div class="col-md-8 fw-semibold">{{ $murid->tempat_lahir ?? '-' }}</div>
                     </div>
 
                     <div class="row mb-3">
@@ -91,24 +106,27 @@
                     <hr>
 
                     <div class="row mb-3">
-                        <div class="col-md-4 text-muted">Kelas</div>
-                        <div class="col-md-8 fw-semibold">
-                            {{ $murid->kelas ? $murid->kelas->nama_kelas : '-' }}
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
                         <div class="col-md-4 text-muted">Wali Murid</div>
                         <div class="col-md-8 fw-semibold">
                             @if ($murid->waliMurid)
                                 {{ $murid->waliMurid->nama_wali }}
+
                                 <small class="text-muted d-block">
                                     {{ ucfirst($murid->waliMurid->hubungan) }} |
-                                    WA: {{ $murid->waliMurid->no_whatsapp ?? '-' }}
+                                    WA: {{ $murid->waliMurid->no_whatsapp }}
                                 </small>
                             @else
                                 -
                             @endif
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-muted">Dibuat / Diperbarui</div>
+                        <div class="col-md-8 fw-semibold">
+                            {{ $murid->created_at ? $murid->created_at->format('d-m-Y H:i') : '-' }}
+                            /
+                            {{ $murid->updated_at ? $murid->updated_at->format('d-m-Y H:i') : '-' }}
                         </div>
                     </div>
 
@@ -118,6 +136,7 @@
                         </a>
 
                         <a href="{{ route($routePrefix . '.murid.edit', $murid) }}" class="btn btn-primary">
+                            <i class="bi bi-pencil-square me-1"></i>
                             Edit Murid
                         </a>
                     </div>

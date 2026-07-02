@@ -1,6 +1,9 @@
 {{-- penjelasan: File ini adalah halaman daftar jadwal pelajaran. --}}
 {{-- penjelasan: File ini dipanggil oleh JadwalPelajaranController method index(). --}}
 {{-- penjelasan: Halaman ini bisa diakses oleh Super Admin dan Admin. --}}
+{{-- penjelasan: Alert berhasil, gagal, dan validasi sudah memakai komponen global admin.components.alert. --}}
+{{-- penjelasan: Tombol aktif/nonaktif memakai modal konfirmasi global melalui data-confirm="true". --}}
+{{-- penjelasan: Label filter tidak memakai keterangan opsional karena filter bersifat fitur pencarian, bukan form input data wajib. --}}
 
 @extends('admin.layouts.app')
 
@@ -28,26 +31,16 @@
         </div>
     </div>
 
-    @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            @foreach ($errors->all() as $error)
-                <div>{{ $error }}</div>
-            @endforeach
-        </div>
-    @endif
-
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <form action="{{ route($routePrefix . '.jadwal-pelajaran.index') }}" method="GET" class="row g-3">
 
                 <div class="col-md-3">
                     <label class="form-label">Tahun Ajaran</label>
+
                     <select name="tahun_ajaran_id" class="form-select">
                         <option value="">Semua Tahun Ajaran</option>
+
                         @foreach ($tahunAjarans as $tahunAjaran)
                             <option value="{{ $tahunAjaran->id }}" {{ request('tahun_ajaran_id') == $tahunAjaran->id ? 'selected' : '' }}>
                                 {{ $tahunAjaran->nama_tahun_ajaran }}
@@ -58,8 +51,10 @@
 
                 <div class="col-md-3">
                     <label class="form-label">Semester</label>
+
                     <select name="semester_id" class="form-select">
                         <option value="">Semua Semester</option>
+
                         @foreach ($semesters as $semester)
                             <option value="{{ $semester->id }}" {{ request('semester_id') == $semester->id ? 'selected' : '' }}>
                                 {{ $semester->nama_semester_label }} - {{ $semester->tahunAjaran?->nama_tahun_ajaran ?? '-' }}
@@ -70,8 +65,10 @@
 
                 <div class="col-md-3">
                     <label class="form-label">Kelas</label>
+
                     <select name="kelas_id" class="form-select">
                         <option value="">Semua Kelas</option>
+
                         @foreach ($kelasList as $kelas)
                             <option value="{{ $kelas->id }}" {{ request('kelas_id') == $kelas->id ? 'selected' : '' }}>
                                 {{ $kelas->nama_kelas }}
@@ -82,8 +79,10 @@
 
                 <div class="col-md-3">
                     <label class="form-label">Guru</label>
+
                     <select name="guru_id" class="form-select">
                         <option value="">Semua Guru</option>
+
                         @foreach ($gurus as $guru)
                             <option value="{{ $guru->id }}" {{ request('guru_id') == $guru->id ? 'selected' : '' }}>
                                 {{ $guru->nama_pegawai }}
@@ -94,6 +93,7 @@
 
                 <div class="col-md-3">
                     <label class="form-label">Hari</label>
+
                     <select name="hari" class="form-select">
                         <option value="">Semua Hari</option>
                         <option value="senin" {{ request('hari') === 'senin' ? 'selected' : '' }}>Senin</option>
@@ -107,6 +107,7 @@
 
                 <div class="col-md-3">
                     <label class="form-label">Status</label>
+
                     <select name="status" class="form-select">
                         <option value="">Semua Status</option>
                         <option value="aktif" {{ request('status') === 'aktif' ? 'selected' : '' }}>Aktif</option>
@@ -132,7 +133,7 @@
     </div>
 
     <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <div class="card-header bg-white border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
             <div>
                 <h6 class="fw-bold mb-0">Daftar Jadwal Pelajaran</h6>
                 <small class="text-muted">Jadwal aktif dan nonaktif yang terdaftar</small>
@@ -160,6 +161,13 @@
 
                     <tbody>
                         @forelse ($jadwalPelajarans as $jadwalPelajaran)
+                            @php
+                                // penjelasan: Pesan konfirmasi dibuat sesuai status jadwal.
+                                $confirmMessage = $jadwalPelajaran->status === 'aktif'
+                                    ? 'Apakah Anda yakin ingin menonaktifkan jadwal pelajaran ini? Data tidak dihapus, hanya statusnya menjadi nonaktif.'
+                                    : 'Apakah Anda yakin ingin mengaktifkan jadwal pelajaran ini? Sistem akan mengecek data aktif dan bentrok jadwal terlebih dahulu.';
+                            @endphp
+
                             <tr>
                                 <td>
                                     <div class="fw-semibold">{{ $jadwalPelajaran->hari_label }}</div>
@@ -177,7 +185,9 @@
                                     <small class="text-muted">{{ $jadwalPelajaran->mataPelajaran?->kode_mapel ?? '-' }}</small>
                                 </td>
 
-                                <td>{{ $jadwalPelajaran->guru?->nama_pegawai ?? '-' }}</td>
+                                <td>
+                                    {{ $jadwalPelajaran->guru?->nama_pegawai ?? '-' }}
+                                </td>
 
                                 <td>
                                     <div>{{ $jadwalPelajaran->tahunAjaran?->nama_tahun_ajaran ?? '-' }}</div>
@@ -185,9 +195,15 @@
                                 </td>
 
                                 <td>
-                                    <span class="badge {{ $jadwalPelajaran->status === 'aktif' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
-                                        {{ ucfirst($jadwalPelajaran->status) }}
-                                    </span>
+                                    @if ($jadwalPelajaran->status === 'aktif')
+                                        <span class="badge bg-success-subtle text-success">
+                                            Aktif
+                                        </span>
+                                    @else
+                                        <span class="badge bg-danger-subtle text-danger">
+                                            Nonaktif
+                                        </span>
+                                    @endif
                                 </td>
 
                                 <td class="text-end">
@@ -209,7 +225,10 @@
                                             <button
                                                 type="submit"
                                                 class="btn btn-sm action-btn {{ $jadwalPelajaran->status === 'aktif' ? 'btn-outline-danger' : 'btn-outline-success' }}"
-                                                onclick="return confirm('Yakin ingin mengubah status jadwal ini?')"
+                                                data-confirm="true"
+                                                data-confirm-message="{{ $confirmMessage }}"
+                                                data-confirm-yes="{{ $jadwalPelajaran->status === 'aktif' ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan' }}"
+                                                data-confirm-yes-class="{{ $jadwalPelajaran->status === 'aktif' ? 'btn-danger' : 'btn-success' }}"
                                             >
                                                 @if ($jadwalPelajaran->status === 'aktif')
                                                     <i class="bi bi-x-circle"></i>

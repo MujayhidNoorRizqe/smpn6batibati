@@ -18,9 +18,15 @@
                         <small class="text-muted">Informasi lengkap mata pelajaran</small>
                     </div>
 
-                    <span class="badge {{ $mataPelajaran->status === 'aktif' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
-                        {{ ucfirst($mataPelajaran->status) }}
-                    </span>
+                    @if ($mataPelajaran->status === 'aktif')
+                        <span class="badge bg-success-subtle text-success">
+                            Aktif
+                        </span>
+                    @else
+                        <span class="badge bg-danger-subtle text-danger">
+                            Nonaktif
+                        </span>
+                    @endif
                 </div>
 
                 <div class="card-body">
@@ -58,9 +64,11 @@
                     <hr>
 
                     <div class="row mb-4">
-                        <div class="col-md-4 text-muted">Tanggal Dibuat</div>
+                        <div class="col-md-4 text-muted">Dibuat / Diperbarui</div>
                         <div class="col-md-8 fw-semibold">
                             {{ $mataPelajaran->created_at ? $mataPelajaran->created_at->format('d-m-Y H:i') : '-' }}
+                            /
+                            {{ $mataPelajaran->updated_at ? $mataPelajaran->updated_at->format('d-m-Y H:i') : '-' }}
                         </div>
                     </div>
 
@@ -70,6 +78,7 @@
                         </a>
 
                         <a href="{{ route($routePrefix . '.mata-pelajaran.edit', $mataPelajaran) }}" class="btn btn-primary">
+                            <i class="bi bi-pencil-square me-1"></i>
                             Edit Mata Pelajaran
                         </a>
                     </div>

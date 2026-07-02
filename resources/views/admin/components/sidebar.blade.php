@@ -5,6 +5,7 @@
 {{-- penjelasan: Jika menu sidebar panjang, sidebar bisa discroll sendiri karena memakai overflow-y: auto di admin.css. --}}
 {{-- penjelasan: File ini memakai route() Laravel untuk mengarahkan menu ke halaman masing-masing. --}}
 {{-- penjelasan: request()->routeIs() dipakai untuk memberi class active pada menu yang sedang dibuka. --}}
+{{-- penjelasan: Menu yang belum dibuat routenya tetap memakai href="#" agar tidak menyebabkan error route not defined. --}}
 
 @php
     // penjelasan: auth()->user() mengambil data user yang sedang login.
@@ -15,6 +16,10 @@
     // penjelasan: Role user digunakan untuk menentukan menu yang tampil.
     // penjelasan: Role yang digunakan pada sistem ini adalah super_admin, admin, guru, dan staff.
     $role = $user->role ?? null;
+
+    // penjelasan: roleLabel dipakai untuk menampilkan role dengan format lebih rapi.
+    // penjelasan: Contoh super_admin menjadi Super Admin.
+    $roleLabel = $role ? ucwords(str_replace('_', ' ', $role)) : '-';
 @endphp
 
 <aside class="admin-sidebar">
@@ -37,7 +42,7 @@
 
         <div class="user-info">
             <div class="user-name">{{ $user->name ?? 'User' }}</div>
-            <div class="user-role">{{ ucwords(str_replace('_', ' ', $role ?? '-')) }}</div>
+            <div class="user-role">{{ $roleLabel }}</div>
         </div>
     </div>
 
@@ -51,12 +56,14 @@
                 <span>Dashboard</span>
             </a>
 
-            <div class="sidebar-section-title">Manajemen</div>
+            <div class="sidebar-section-title">Manajemen User</div>
 
             <a href="{{ route('super-admin.users.index') }}" class="{{ request()->routeIs('super-admin.users.*') ? 'active' : '' }}">
                 <i class="bi bi-people"></i>
                 <span>Manajemen User</span>
             </a>
+
+            <div class="sidebar-section-title">Data Master</div>
 
             <a href="{{ route('super-admin.pegawai.index') }}" class="{{ request()->routeIs('super-admin.pegawai.*') ? 'active' : '' }}">
                 <i class="bi bi-person-badge"></i>
@@ -95,9 +102,6 @@
                 <span>Semester</span>
             </a>
 
-            {{-- penjelasan: Menu Jadwal Pelajaran sudah aktif. --}}
-            {{-- penjelasan: Menu ini mengarah ke modul jadwal pelajaran untuk mengatur guru, kelas, mapel, hari, dan jam pelajaran. --}}
-            {{-- penjelasan: request()->routeIs('super-admin.jadwal-pelajaran.*') membuat menu aktif pada halaman daftar, tambah, edit, dan detail jadwal. --}}
             <a href="{{ route('super-admin.jadwal-pelajaran.index') }}" class="{{ request()->routeIs('super-admin.jadwal-pelajaran.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar-check"></i>
                 <span>Jadwal Pelajaran</span>
@@ -105,54 +109,54 @@
 
             <div class="sidebar-section-title">Absensi & Nilai</div>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Absensi Pegawai akan dibuat pada tahap berikutnya">
                 <i class="bi bi-fingerprint"></i>
                 <span>Absensi Pegawai</span>
             </a>
 
-            <a href="#">
-                <i class="bi bi-briefcase"></i>
-                <span>Pengajuan Dinas</span>
+            <a href="{{ route('super-admin.persetujuan-absensi-pegawai.index') }}" class="{{ request()->routeIs('super-admin.persetujuan-absensi-pegawai.*') ? 'active' : '' }}">
+                <i class="bi bi-clipboard-check"></i>
+                <span>Persetujuan Absensi</span>
             </a>
 
-            <a href="#">
-                <i class="bi bi-clipboard-check"></i>
+            <a href="#" aria-disabled="true" title="Modul Absensi Murid belum dibuat">
+                <i class="bi bi-person-check"></i>
                 <span>Absensi Murid</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Nilai belum dibuat">
                 <i class="bi bi-journal-text"></i>
                 <span>Nilai</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Laporan belum dibuat">
                 <i class="bi bi-file-earmark-bar-graph"></i>
                 <span>Laporan</span>
             </a>
 
             <div class="sidebar-section-title">Website & Sistem</div>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul WhatsApp Fonnte belum dibuat">
                 <i class="bi bi-whatsapp"></i>
                 <span>WhatsApp Fonnte</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Berita/Kegiatan belum dibuat">
                 <i class="bi bi-newspaper"></i>
                 <span>Berita / Kegiatan</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Galeri belum dibuat">
                 <i class="bi bi-images"></i>
                 <span>Galeri</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Pengaturan belum dibuat">
                 <i class="bi bi-gear"></i>
                 <span>Pengaturan</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Log Aktivitas belum dibuat">
                 <i class="bi bi-clock-history"></i>
                 <span>Log Aktivitas</span>
             </a>
@@ -205,8 +209,6 @@
                 <span>Semester</span>
             </a>
 
-            {{-- penjelasan: Menu Jadwal Pelajaran sudah aktif untuk Admin. --}}
-            {{-- penjelasan: Admin dapat mengatur jadwal pelajaran berdasarkan tahun ajaran, semester, kelas, mata pelajaran, guru, hari, dan jam. --}}
             <a href="{{ route('admin.jadwal-pelajaran.index') }}" class="{{ request()->routeIs('admin.jadwal-pelajaran.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar-check"></i>
                 <span>Jadwal Pelajaran</span>
@@ -214,44 +216,44 @@
 
             <div class="sidebar-section-title">Absensi & Nilai</div>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Absensi Pegawai akan dibuat pada tahap berikutnya">
                 <i class="bi bi-fingerprint"></i>
                 <span>Absensi Pegawai</span>
             </a>
 
-            <a href="#">
-                <i class="bi bi-briefcase"></i>
-                <span>Persetujuan Dinas</span>
+            <a href="{{ route('admin.persetujuan-absensi-pegawai.index') }}" class="{{ request()->routeIs('admin.persetujuan-absensi-pegawai.*') ? 'active' : '' }}">
+                <i class="bi bi-clipboard-check"></i>
+                <span>Persetujuan Absensi</span>
             </a>
 
-            <a href="#">
-                <i class="bi bi-clipboard-check"></i>
+            <a href="#" aria-disabled="true" title="Modul Absensi Murid belum dibuat">
+                <i class="bi bi-person-check"></i>
                 <span>Absensi Murid</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Nilai belum dibuat">
                 <i class="bi bi-journal-text"></i>
                 <span>Nilai</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Laporan belum dibuat">
                 <i class="bi bi-file-earmark-bar-graph"></i>
                 <span>Laporan</span>
             </a>
 
             <div class="sidebar-section-title">Website</div>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul WhatsApp Fonnte belum dibuat">
                 <i class="bi bi-whatsapp"></i>
                 <span>WhatsApp Fonnte</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Berita/Kegiatan belum dibuat">
                 <i class="bi bi-newspaper"></i>
                 <span>Berita / Kegiatan</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Galeri belum dibuat">
                 <i class="bi bi-images"></i>
                 <span>Galeri</span>
             </a>
@@ -267,56 +269,56 @@
 
             <div class="sidebar-section-title">Absensi</div>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Absen Saya akan dibuat pada tahap berikutnya">
                 <i class="bi bi-fingerprint"></i>
                 <span>Absen Saya</span>
             </a>
 
-            <a href="#">
-                <i class="bi bi-briefcase"></i>
-                <span>Pengajuan Dinas</span>
+            <a href="{{ route('guru.pengajuan-absensi-pegawai.index') }}" class="{{ request()->routeIs('guru.pengajuan-absensi-pegawai.*') ? 'active' : '' }}">
+                <i class="bi bi-send-check"></i>
+                <span>Pengajuan Absensi</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Riwayat Absensi belum dibuat">
                 <i class="bi bi-clock-history"></i>
                 <span>Riwayat Absensi</span>
             </a>
 
             <div class="sidebar-section-title">Akademik</div>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Jadwal Mengajar Guru belum dibuat">
                 <i class="bi bi-calendar-check"></i>
                 <span>Jadwal Mengajar</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Absen Murid belum dibuat">
                 <i class="bi bi-clipboard-check"></i>
                 <span>Absen Murid</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Rekap Absen Murid belum dibuat">
                 <i class="bi bi-card-checklist"></i>
                 <span>Rekap Absen Murid</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Input Nilai belum dibuat">
                 <i class="bi bi-journal-plus"></i>
                 <span>Input Nilai</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Rekap Nilai belum dibuat">
                 <i class="bi bi-journal-text"></i>
                 <span>Rekap Nilai</span>
             </a>
 
             <div class="sidebar-section-title">Akun</div>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Profil Saya belum dibuat">
                 <i class="bi bi-person-circle"></i>
                 <span>Profil Saya</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Ganti Password belum dibuat">
                 <i class="bi bi-key"></i>
                 <span>Ganti Password</span>
             </a>
@@ -332,29 +334,29 @@
 
             <div class="sidebar-section-title">Absensi</div>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Absen Saya akan dibuat pada tahap berikutnya">
                 <i class="bi bi-fingerprint"></i>
                 <span>Absen Saya</span>
             </a>
 
-            <a href="#">
-                <i class="bi bi-briefcase"></i>
-                <span>Pengajuan Dinas</span>
+            <a href="{{ route('staff.pengajuan-absensi-pegawai.index') }}" class="{{ request()->routeIs('staff.pengajuan-absensi-pegawai.*') ? 'active' : '' }}">
+                <i class="bi bi-send-check"></i>
+                <span>Pengajuan Absensi</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Riwayat Absensi belum dibuat">
                 <i class="bi bi-clock-history"></i>
                 <span>Riwayat Absensi</span>
             </a>
 
             <div class="sidebar-section-title">Akun</div>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Profil Saya belum dibuat">
                 <i class="bi bi-person-circle"></i>
                 <span>Profil Saya</span>
             </a>
 
-            <a href="#">
+            <a href="#" aria-disabled="true" title="Modul Ganti Password belum dibuat">
                 <i class="bi bi-key"></i>
                 <span>Ganti Password</span>
             </a>

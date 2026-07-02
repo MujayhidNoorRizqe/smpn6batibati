@@ -4,52 +4,58 @@
 // penjelasan: Controller ini dipakai oleh Super Admin dan Admin.
 // penjelasan: Controller ini mengatur daftar murid, tambah murid, detail murid, edit murid, update murid, upload foto, dan aktif/nonaktif murid.
 // penjelasan: Controller ini memanggil Model Murid, Kelas, dan WaliMurid.
+// penjelasan: Semua validasi memakai pesan Bahasa Indonesia agar selaras dengan UI global.
+// penjelasan: Nama murid, kelas, jenis kelamin, wali murid, NISN, tanggal lahir, dan status wajib diisi.
+// penjelasan: NIS dan foto bersifat opsional.
 
 namespace App\Http\Controllers\Admin;
 
-// penjelasan: Controller adalah class dasar bawaan Laravel untuk membuat controller.
 use App\Http\Controllers\Controller;
+// penjelasan: Controller adalah class dasar bawaan Laravel untuk membuat controller.
 
-// penjelasan: Model Kelas digunakan untuk memilih kelas pada form murid.
 use App\Models\Kelas;
+// penjelasan: Model Kelas digunakan untuk memilih kelas pada form murid.
 
-// penjelasan: Model Murid digunakan untuk mengambil, menyimpan, dan mengubah data pada tabel murids.
 use App\Models\Murid;
+// penjelasan: Model Murid digunakan untuk mengambil, menyimpan, dan mengubah data pada tabel murids.
 
-// penjelasan: Model WaliMurid digunakan untuk memilih wali murid pada form murid.
 use App\Models\WaliMurid;
+// penjelasan: Model WaliMurid digunakan untuk memilih wali murid pada form murid.
 
-// penjelasan: Request digunakan untuk mengambil data dari form tambah dan edit murid.
 use Illuminate\Http\Request;
+// penjelasan: Request digunakan untuk mengambil data dari form tambah dan edit murid.
 
-// penjelasan: Storage digunakan untuk menyimpan dan menghapus foto murid.
 use Illuminate\Support\Facades\Storage;
+// penjelasan: Storage digunakan untuk menyimpan dan menghapus foto murid.
 
-// penjelasan: Rule digunakan untuk validasi unique dan pilihan nilai tertentu.
 use Illuminate\Validation\Rule;
+// penjelasan: Rule digunakan untuk validasi unique dan pilihan nilai tertentu.
+
+use Illuminate\Validation\ValidationException;
+// penjelasan: ValidationException digunakan untuk mengembalikan error validasi manual dalam Bahasa Indonesia.
 
 class MuridController extends Controller
 {
-    // penjelasan: Method routePrefix digunakan agar route bisa menyesuaikan role user yang sedang login.
-    // penjelasan: Jika user login sebagai super_admin, maka prefix route adalah super-admin.
-    // penjelasan: Jika user login sebagai admin, maka prefix route adalah admin.
+    /**
+     * penjelasan: Method routePrefix digunakan agar route bisa menyesuaikan role user yang sedang login.
+     * penjelasan: Jika user login sebagai super_admin, maka prefix route adalah super-admin.
+     * penjelasan: Jika user login sebagai admin, maka prefix route adalah admin.
+     */
     private function routePrefix(): string
     {
         return auth()->user()->role === 'super_admin' ? 'super-admin' : 'admin';
     }
 
-    // penjelasan: Method index digunakan untuk menampilkan daftar murid.
-    // penjelasan: Method ini dipanggil oleh route GET /super-admin/murid atau /admin/murid.
-    // penjelasan: Method ini juga memproses pencarian dan filter kelas/status.
+    /**
+     * penjelasan: Method index digunakan untuk menampilkan daftar murid.
+     * penjelasan: Method ini dipanggil oleh route GET /super-admin/murid atau /admin/murid.
+     */
     public function index(Request $request)
     {
-        // penjelasan: Query awal mengambil data murid beserta relasi kelas dan waliMurid.
-        // penjelasan: with(['kelas', 'waliMurid']) mencegah query berulang saat data ditampilkan di tabel.
         $query = Murid::with(['kelas', 'waliMurid']);
 
-        // penjelasan: Jika search diisi, sistem mencari berdasarkan nama murid, NIS, atau NISN.
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
                 $q->where('nama_murid', 'like', '%' . $search . '%')
@@ -58,47 +64,41 @@ class MuridController extends Controller
             });
         }
 
-        // penjelasan: Filter kelas_id digunakan untuk menampilkan murid berdasarkan kelas tertentu.
         if ($request->filled('kelas_id')) {
             $query->where('kelas_id', $request->kelas_id);
         }
 
-        // penjelasan: Filter jenis_kelamin digunakan untuk menampilkan murid laki-laki atau perempuan.
         if ($request->filled('jenis_kelamin')) {
             $query->where('jenis_kelamin', $request->jenis_kelamin);
         }
 
-        // penjelasan: Filter status digunakan untuk menampilkan murid aktif atau nonaktif.
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // penjelasan: Data murid diurutkan dari terbaru dan ditampilkan 10 data per halaman.
         $murids = $query->latest()->paginate(10)->withQueryString();
 
-        // penjelasan: kelasList digunakan untuk pilihan filter kelas pada halaman index.
         $kelasList = Kelas::where('status', 'aktif')
             ->orderBy('tingkat')
             ->orderBy('nama_kelas')
             ->get();
 
-        // penjelasan: routePrefix dikirim ke view agar tombol/link mengikuti role login.
         $routePrefix = $this->routePrefix();
 
         return view('admin.pages.murid.index', compact('murids', 'kelasList', 'routePrefix'));
     }
 
-    // penjelasan: Method create digunakan untuk menampilkan form tambah murid.
-    // penjelasan: Method ini dipanggil oleh route GET /murid/create.
+    /**
+     * penjelasan: Method create digunakan untuk menampilkan form tambah murid.
+     * penjelasan: Method ini dipanggil oleh route GET /murid/create.
+     */
     public function create()
     {
-        // penjelasan: Mengambil kelas aktif untuk pilihan kelas murid.
         $kelasList = Kelas::where('status', 'aktif')
             ->orderBy('tingkat')
             ->orderBy('nama_kelas')
             ->get();
 
-        // penjelasan: Mengambil wali murid aktif untuk pilihan wali murid.
         $waliMurids = WaliMurid::where('status', 'aktif')
             ->orderBy('nama_wali')
             ->get();
@@ -108,71 +108,36 @@ class MuridController extends Controller
         return view('admin.pages.murid.create', compact('kelasList', 'waliMurids', 'routePrefix'));
     }
 
-    // penjelasan: Method store digunakan untuk menyimpan data murid baru.
-    // penjelasan: Method ini dipanggil oleh form tambah murid melalui route POST /murid.
+    /**
+     * penjelasan: Method store digunakan untuk menyimpan data murid baru.
+     * penjelasan: Method ini dipanggil oleh form tambah murid.
+     */
     public function store(Request $request)
     {
-        // penjelasan: Validasi memastikan data murid sesuai aturan sebelum disimpan.
-        // penjelasan: kelas_id wajib karena setiap murid harus memiliki kelas.
-        // penjelasan: wali_murid_id wajib dipilih agar data murid terhubung dengan wali.
-        // penjelasan: nis dan nisn boleh kosong, tetapi jika diisi harus unik.
         $validated = $request->validate([
             'kelas_id' => ['required', 'exists:kelas,id'],
             'wali_murid_id' => ['required', 'exists:wali_murids,id'],
             'nis' => ['nullable', 'string', 'max:50', 'unique:murids,nis'],
-            'nisn' => ['nullable', 'string', 'max:50', 'unique:murids,nisn'],
+            'nisn' => ['required', 'string', 'max:50', 'unique:murids,nisn'],
             'nama_murid' => ['required', 'string', 'max:150'],
             'jenis_kelamin' => ['required', Rule::in(['L', 'P'])],
             'tempat_lahir' => ['nullable', 'string', 'max:100'],
-            'tanggal_lahir' => ['nullable', 'date'],
+            'tanggal_lahir' => ['required', 'date'],
             'agama' => ['nullable', 'string', 'max:50'],
             'alamat' => ['nullable', 'string'],
             'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'status' => ['required', Rule::in(['aktif', 'nonaktif'])],
-        ], [
-            'kelas_id.required' => 'Kelas wajib dipilih.',
-            'kelas_id.exists' => 'Kelas tidak valid.',
-            'wali_murid_id.required' => 'Wali murid wajib dipilih.',
-            'wali_murid_id.exists' => 'Wali murid tidak valid.',
-            'nis.unique' => 'NIS sudah digunakan.',
-            'nisn.unique' => 'NISN sudah digunakan.',
-            'nama_murid.required' => 'Nama murid wajib diisi.',
-            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
-            'foto.image' => 'File foto harus berupa gambar.',
-            'foto.mimes' => 'Format foto harus jpg, jpeg, png, atau webp.',
-            'foto.max' => 'Ukuran foto maksimal 2MB.',
-            'status.required' => 'Status wajib dipilih.',
-        ]);
+        ], $this->validationMessages());
 
-        // penjelasan: Sistem memastikan kelas yang dipilih masih aktif.
-        $kelasAktif = Kelas::where('id', $validated['kelas_id'])
-            ->where('status', 'aktif')
-            ->exists();
+        $this->ensureActiveKelas($validated['kelas_id']);
+        $this->ensureActiveWaliMurid($validated['wali_murid_id']);
 
-        if (! $kelasAktif) {
-            return back()
-                ->withErrors(['kelas_id' => 'Kelas yang dipilih harus berstatus aktif.'])
-                ->withInput();
-        }
+        $validated = $this->normalizeFields($validated);
 
-        // penjelasan: Sistem memastikan wali murid yang dipilih masih aktif.
-        $waliAktif = WaliMurid::where('id', $validated['wali_murid_id'])
-            ->where('status', 'aktif')
-            ->exists();
-
-        if (! $waliAktif) {
-            return back()
-                ->withErrors(['wali_murid_id' => 'Wali murid yang dipilih harus berstatus aktif.'])
-                ->withInput();
-        }
-
-        // penjelasan: Jika ada upload foto, foto disimpan ke storage/app/public/foto/murid.
-        // penjelasan: Path foto disimpan ke kolom foto di tabel murids.
         if ($request->hasFile('foto')) {
             $validated['foto'] = $request->file('foto')->store('foto/murid', 'public');
         }
 
-        // penjelasan: Membuat data murid baru ke tabel murids.
         Murid::create($validated);
 
         return redirect()
@@ -180,11 +145,12 @@ class MuridController extends Controller
             ->with('success', 'Data murid berhasil ditambahkan.');
     }
 
-    // penjelasan: Method show digunakan untuk menampilkan detail murid.
-    // penjelasan: Parameter Murid $murid otomatis mengambil data murid berdasarkan id pada URL.
+    /**
+     * penjelasan: Method show digunakan untuk menampilkan detail murid.
+     * penjelasan: Parameter Murid $murid otomatis mengambil data murid berdasarkan id pada URL.
+     */
     public function show(Murid $murid)
     {
-        // penjelasan: load mengambil data relasi kelas dan wali murid untuk ditampilkan di halaman detail.
         $murid->load(['kelas', 'waliMurid']);
 
         $routePrefix = $this->routePrefix();
@@ -192,22 +158,24 @@ class MuridController extends Controller
         return view('admin.pages.murid.show', compact('murid', 'routePrefix'));
     }
 
-    // penjelasan: Method edit digunakan untuk menampilkan form edit murid.
-    // penjelasan: Method ini dipanggil oleh route GET /murid/{murid}/edit.
+    /**
+     * penjelasan: Method edit digunakan untuk menampilkan form edit murid.
+     * penjelasan: Method ini dipanggil oleh route GET /murid/{murid}/edit.
+     */
     public function edit(Murid $murid)
     {
-        // penjelasan: Mengambil kelas aktif atau kelas yang sedang dipakai murid.
-        // penjelasan: Ini mencegah pilihan kelas hilang saat kelas lama sedang nonaktif.
-        $kelasList = Kelas::where('status', 'aktif')
-            ->orWhere('id', $murid->kelas_id)
+        $kelasList = Kelas::where(function ($query) use ($murid) {
+                $query->where('status', 'aktif')
+                    ->orWhere('id', $murid->kelas_id);
+            })
             ->orderBy('tingkat')
             ->orderBy('nama_kelas')
             ->get();
 
-        // penjelasan: Mengambil wali aktif atau wali yang sedang dipakai murid.
-        // penjelasan: Ini mencegah pilihan wali hilang saat wali lama sedang nonaktif.
-        $waliMurids = WaliMurid::where('status', 'aktif')
-            ->orWhere('id', $murid->wali_murid_id)
+        $waliMurids = WaliMurid::where(function ($query) use ($murid) {
+                $query->where('status', 'aktif')
+                    ->orWhere('id', $murid->wali_murid_id);
+            })
             ->orderBy('nama_wali')
             ->get();
 
@@ -216,11 +184,12 @@ class MuridController extends Controller
         return view('admin.pages.murid.edit', compact('murid', 'kelasList', 'waliMurids', 'routePrefix'));
     }
 
-    // penjelasan: Method update digunakan untuk menyimpan perubahan data murid.
-    // penjelasan: Method ini dipanggil oleh form edit murid melalui route PUT /murid/{murid}.
+    /**
+     * penjelasan: Method update digunakan untuk menyimpan perubahan data murid.
+     * penjelasan: Method ini dipanggil oleh form edit murid.
+     */
     public function update(Request $request, Murid $murid)
     {
-        // penjelasan: Validasi unique pada nis dan nisn mengabaikan data murid yang sedang diedit.
         $validated = $request->validate([
             'kelas_id' => ['required', 'exists:kelas,id'],
             'wali_murid_id' => ['required', 'exists:wali_murids,id'],
@@ -231,7 +200,7 @@ class MuridController extends Controller
                 Rule::unique('murids', 'nis')->ignore($murid->id),
             ],
             'nisn' => [
-                'nullable',
+                'required',
                 'string',
                 'max:50',
                 Rule::unique('murids', 'nisn')->ignore($murid->id),
@@ -239,27 +208,18 @@ class MuridController extends Controller
             'nama_murid' => ['required', 'string', 'max:150'],
             'jenis_kelamin' => ['required', Rule::in(['L', 'P'])],
             'tempat_lahir' => ['nullable', 'string', 'max:100'],
-            'tanggal_lahir' => ['nullable', 'date'],
+            'tanggal_lahir' => ['required', 'date'],
             'agama' => ['nullable', 'string', 'max:50'],
             'alamat' => ['nullable', 'string'],
             'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'status' => ['required', Rule::in(['aktif', 'nonaktif'])],
-        ], [
-            'kelas_id.required' => 'Kelas wajib dipilih.',
-            'kelas_id.exists' => 'Kelas tidak valid.',
-            'wali_murid_id.required' => 'Wali murid wajib dipilih.',
-            'wali_murid_id.exists' => 'Wali murid tidak valid.',
-            'nis.unique' => 'NIS sudah digunakan.',
-            'nisn.unique' => 'NISN sudah digunakan.',
-            'nama_murid.required' => 'Nama murid wajib diisi.',
-            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
-            'foto.image' => 'File foto harus berupa gambar.',
-            'foto.mimes' => 'Format foto harus jpg, jpeg, png, atau webp.',
-            'foto.max' => 'Ukuran foto maksimal 2MB.',
-            'status.required' => 'Status wajib dipilih.',
-        ]);
+        ], $this->validationMessages());
 
-        // penjelasan: Jika ada foto baru, sistem menghapus foto lama dari storage agar tidak menumpuk.
+        $this->ensureActiveKelas($validated['kelas_id'], $murid->kelas_id);
+        $this->ensureActiveWaliMurid($validated['wali_murid_id'], $murid->wali_murid_id);
+
+        $validated = $this->normalizeFields($validated);
+
         if ($request->hasFile('foto')) {
             if ($murid->foto && Storage::disk('public')->exists($murid->foto)) {
                 Storage::disk('public')->delete($murid->foto);
@@ -268,7 +228,6 @@ class MuridController extends Controller
             $validated['foto'] = $request->file('foto')->store('foto/murid', 'public');
         }
 
-        // penjelasan: Update data murid pada tabel murids.
         $murid->update($validated);
 
         return redirect()
@@ -276,14 +235,159 @@ class MuridController extends Controller
             ->with('success', 'Data murid berhasil diperbarui.');
     }
 
-    // penjelasan: Method toggleStatus digunakan untuk mengubah status murid aktif/nonaktif.
-    // penjelasan: Data murid tidak dihapus permanen agar riwayat absensi dan nilai tetap aman.
+    /**
+     * penjelasan: Method toggleStatus digunakan untuk mengubah status murid aktif/nonaktif.
+     * penjelasan: Data murid tidak dihapus permanen agar riwayat absensi dan nilai tetap aman.
+     */
     public function toggleStatus(Murid $murid)
     {
+        $newStatus = $murid->status === 'aktif' ? 'nonaktif' : 'aktif';
+
         $murid->update([
-            'status' => $murid->status === 'aktif' ? 'nonaktif' : 'aktif',
+            'status' => $newStatus,
         ]);
 
-        return back()->with('success', 'Status murid berhasil diubah.');
+        $message = $newStatus === 'aktif'
+            ? 'Murid berhasil diaktifkan.'
+            : 'Murid berhasil dinonaktifkan.';
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * penjelasan: Method validationMessages menyimpan semua pesan validasi Bahasa Indonesia.
+     * penjelasan: Pesan ini dipakai saat tambah dan edit murid.
+     */
+    private function validationMessages(): array
+    {
+        return [
+            'kelas_id.required' => 'Kelas wajib dipilih.',
+            'kelas_id.exists' => 'Kelas tidak valid.',
+
+            'wali_murid_id.required' => 'Wali murid wajib dipilih.',
+            'wali_murid_id.exists' => 'Wali murid tidak valid.',
+
+            'nis.string' => 'NIS harus berupa teks.',
+            'nis.max' => 'NIS maksimal 50 karakter.',
+            'nis.unique' => 'NIS sudah digunakan.',
+
+            'nisn.required' => 'NISN wajib diisi.',
+            'nisn.string' => 'NISN harus berupa teks.',
+            'nisn.max' => 'NISN maksimal 50 karakter.',
+            'nisn.unique' => 'NISN sudah digunakan.',
+
+            'nama_murid.required' => 'Nama murid wajib diisi.',
+            'nama_murid.string' => 'Nama murid harus berupa teks.',
+            'nama_murid.max' => 'Nama murid maksimal 150 karakter.',
+
+            'jenis_kelamin.required' => 'Jenis kelamin wajib dipilih.',
+            'jenis_kelamin.in' => 'Jenis kelamin yang dipilih tidak valid.',
+
+            'tempat_lahir.string' => 'Tempat lahir harus berupa teks.',
+            'tempat_lahir.max' => 'Tempat lahir maksimal 100 karakter.',
+
+            'tanggal_lahir.required' => 'Tanggal lahir wajib dipilih.',
+            'tanggal_lahir.date' => 'Tanggal lahir tidak valid.',
+
+            'agama.string' => 'Agama harus berupa teks.',
+            'agama.max' => 'Agama maksimal 50 karakter.',
+
+            'alamat.string' => 'Alamat harus berupa teks.',
+
+            'foto.image' => 'File foto harus berupa gambar.',
+            'foto.mimes' => 'Format foto harus jpg, jpeg, png, atau webp.',
+            'foto.max' => 'Ukuran foto maksimal 2MB.',
+
+            'status.required' => 'Status wajib dipilih.',
+            'status.in' => 'Status yang dipilih tidak valid.',
+        ];
+    }
+
+    /**
+     * penjelasan: Method ensureActiveKelas memastikan kelas yang dipilih aktif.
+     * penjelasan: Saat edit, kelas lama yang sedang terhubung tetap diperbolehkan agar data lama tidak rusak.
+     */
+    private function ensureActiveKelas(int|string $kelasId, int|string|null $currentKelasId = null): void
+    {
+        if ($currentKelasId !== null && (string) $kelasId === (string) $currentKelasId) {
+            return;
+        }
+
+        $kelasAktif = Kelas::where('id', $kelasId)
+            ->where('status', 'aktif')
+            ->exists();
+
+        if (! $kelasAktif) {
+            throw ValidationException::withMessages([
+                'kelas_id' => 'Kelas yang dipilih harus berstatus aktif.',
+            ]);
+        }
+    }
+
+    /**
+     * penjelasan: Method ensureActiveWaliMurid memastikan wali murid yang dipilih aktif.
+     * penjelasan: Saat edit, wali lama yang sedang terhubung tetap diperbolehkan agar data lama tidak rusak.
+     */
+    private function ensureActiveWaliMurid(int|string $waliMuridId, int|string|null $currentWaliMuridId = null): void
+    {
+        if ($currentWaliMuridId !== null && (string) $waliMuridId === (string) $currentWaliMuridId) {
+            return;
+        }
+
+        $waliAktif = WaliMurid::where('id', $waliMuridId)
+            ->where('status', 'aktif')
+            ->exists();
+
+        if (! $waliAktif) {
+            throw ValidationException::withMessages([
+                'wali_murid_id' => 'Wali murid yang dipilih harus berstatus aktif.',
+            ]);
+        }
+    }
+
+    /**
+     * penjelasan: Method normalizeFields membersihkan input sebelum disimpan.
+     * penjelasan: Field opsional kosong akan disimpan sebagai null.
+     */
+    private function normalizeFields(array $validated): array
+    {
+        $nullableFields = [
+            'nis',
+            'tempat_lahir',
+            'agama',
+            'alamat',
+        ];
+
+        foreach ($nullableFields as $field) {
+            if (array_key_exists($field, $validated) && $validated[$field] === '') {
+                $validated[$field] = null;
+            }
+        }
+
+        if (isset($validated['nama_murid'])) {
+            $validated['nama_murid'] = trim($validated['nama_murid']);
+        }
+
+        if (isset($validated['nis']) && $validated['nis'] !== null) {
+            $validated['nis'] = trim($validated['nis']);
+        }
+
+        if (isset($validated['nisn'])) {
+            $validated['nisn'] = trim($validated['nisn']);
+        }
+
+        if (isset($validated['tempat_lahir']) && $validated['tempat_lahir'] !== null) {
+            $validated['tempat_lahir'] = trim($validated['tempat_lahir']);
+        }
+
+        if (isset($validated['agama']) && $validated['agama'] !== null) {
+            $validated['agama'] = trim($validated['agama']);
+        }
+
+        if (isset($validated['alamat']) && $validated['alamat'] !== null) {
+            $validated['alamat'] = trim($validated['alamat']);
+        }
+
+        return $validated;
     }
 }

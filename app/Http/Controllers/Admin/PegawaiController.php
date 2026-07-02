@@ -4,48 +4,51 @@
 // penjelasan: Controller ini dipakai oleh Super Admin dan Admin.
 // penjelasan: Controller ini mengatur daftar pegawai, tambah pegawai, detail, edit, update, dan ubah status pegawai.
 // penjelasan: Controller ini juga mengatur upload foto pegawai ke storage Laravel.
+// penjelasan: Semua validasi memakai pesan Bahasa Indonesia agar selaras dengan UI global.
+// penjelasan: Pada proses tambah pegawai, jabatan dan alamat dibuat wajib sesuai kebutuhan sistem.
 
 namespace App\Http\Controllers\Admin;
 
-// penjelasan: Controller adalah class dasar bawaan Laravel.
 use App\Http\Controllers\Controller;
+// penjelasan: Controller adalah class dasar bawaan Laravel.
 
-// penjelasan: Model Pegawai digunakan untuk mengambil dan menyimpan data pada tabel pegawais.
 use App\Models\Pegawai;
+// penjelasan: Model Pegawai digunakan untuk mengambil dan menyimpan data pada tabel pegawais.
 
-// penjelasan: Model User digunakan untuk mengambil akun guru/staff yang bisa dihubungkan ke data pegawai.
 use App\Models\User;
+// penjelasan: Model User digunakan untuk mengambil akun guru/staff yang bisa dihubungkan ke data pegawai.
 
-// penjelasan: Request digunakan untuk mengambil data dari form tambah dan edit pegawai.
 use Illuminate\Http\Request;
+// penjelasan: Request digunakan untuk mengambil data dari form tambah dan edit pegawai.
 
-// penjelasan: Storage digunakan untuk menyimpan dan menghapus file foto pegawai.
 use Illuminate\Support\Facades\Storage;
+// penjelasan: Storage digunakan untuk menyimpan dan menghapus file foto pegawai.
 
-// penjelasan: Rule digunakan untuk validasi unique yang lebih fleksibel.
 use Illuminate\Validation\Rule;
+// penjelasan: Rule digunakan untuk validasi unique yang lebih fleksibel.
 
 class PegawaiController extends Controller
 {
-    // penjelasan: Method routePrefix digunakan untuk menentukan prefix route berdasarkan role login.
-    // penjelasan: Jika login sebagai super_admin maka route-nya super-admin.
-    // penjelasan: Jika login sebagai admin maka route-nya admin.
+    /**
+     * penjelasan: Method routePrefix digunakan untuk menentukan prefix route berdasarkan role login.
+     * penjelasan: Jika login sebagai super_admin maka route-nya super-admin.
+     * penjelasan: Jika login sebagai admin maka route-nya admin.
+     */
     private function routePrefix(): string
     {
         return auth()->user()->role === 'super_admin' ? 'super-admin' : 'admin';
     }
 
-    // penjelasan: Method index digunakan untuk menampilkan daftar pegawai.
-    // penjelasan: Method ini dipanggil oleh route GET /super-admin/pegawai atau /admin/pegawai.
+    /**
+     * penjelasan: Method index digunakan untuk menampilkan daftar pegawai.
+     * penjelasan: Method ini dipanggil oleh route GET /super-admin/pegawai atau /admin/pegawai.
+     */
     public function index(Request $request)
     {
-        // penjelasan: Query awal mengambil data pegawai beserta relasi user.
-        // penjelasan: with('user') digunakan agar data akun user bisa ditampilkan tanpa query berulang.
         $query = Pegawai::with('user');
 
-        // penjelasan: Jika input search diisi, sistem mencari berdasarkan nama pegawai, NIP, atau jabatan.
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
                 $q->where('nama_pegawai', 'like', '%' . $search . '%')
@@ -54,31 +57,27 @@ class PegawaiController extends Controller
             });
         }
 
-        // penjelasan: Filter jenis_pegawai dipakai untuk menampilkan guru saja atau staff saja.
         if ($request->filled('jenis_pegawai')) {
             $query->where('jenis_pegawai', $request->jenis_pegawai);
         }
 
-        // penjelasan: Filter status dipakai untuk menampilkan pegawai aktif atau nonaktif.
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // penjelasan: Data pegawai diurutkan dari yang terbaru dan ditampilkan 10 data per halaman.
         $pegawais = $query->latest()->paginate(10)->withQueryString();
 
-        // penjelasan: routePrefix dikirim ke view agar tombol/link menyesuaikan role login.
         $routePrefix = $this->routePrefix();
 
         return view('admin.pages.pegawai.index', compact('pegawais', 'routePrefix'));
     }
 
-    // penjelasan: Method create digunakan untuk menampilkan form tambah pegawai.
-    // penjelasan: Method ini dipanggil oleh route GET /super-admin/pegawai/create atau /admin/pegawai/create.
+    /**
+     * penjelasan: Method create digunakan untuk menampilkan form tambah pegawai.
+     * penjelasan: Method ini dipanggil oleh route GET /super-admin/pegawai/create atau /admin/pegawai/create.
+     */
     public function create()
     {
-        // penjelasan: Mengambil akun guru/staff yang belum terhubung ke data pegawai.
-        // penjelasan: Akun admin tidak wajib menjadi pegawai, jadi tidak ditampilkan.
         $users = User::whereIn('role', ['guru', 'staff'])
             ->whereDoesntHave('pegawai')
             ->where('status', 'aktif')
@@ -90,43 +89,43 @@ class PegawaiController extends Controller
         return view('admin.pages.pegawai.create', compact('users', 'routePrefix'));
     }
 
-    // penjelasan: Method store digunakan untuk menyimpan data pegawai baru.
-    // penjelasan: Method ini dipanggil oleh form tambah pegawai.
+    /**
+     * penjelasan: Method store digunakan untuk menyimpan data pegawai baru.
+     * penjelasan: Method ini dipanggil oleh form tambah pegawai.
+     */
     public function store(Request $request)
     {
-        // penjelasan: Validasi memastikan data pegawai sesuai aturan.
-        // penjelasan: user_id nullable karena pegawai boleh dibuat tanpa akun login.
-        // penjelasan: nip nullable tetapi jika diisi harus unik.
         $validated = $request->validate([
             'user_id' => ['nullable', 'exists:users,id', 'unique:pegawais,user_id'],
             'nip' => ['nullable', 'string', 'max:50', 'unique:pegawais,nip'],
             'nama_pegawai' => ['required', 'string', 'max:150'],
             'jenis_pegawai' => ['required', Rule::in(['guru', 'staff'])],
-            'jabatan' => ['nullable', 'string', 'max:150'],
+            'jabatan' => ['required', 'string', 'max:150'],
             'jenis_kelamin' => ['nullable', Rule::in(['L', 'P'])],
             'no_hp' => ['nullable', 'string', 'max:30'],
-            'alamat' => ['nullable', 'string'],
+            'alamat' => ['required', 'string'],
             'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'status' => ['required', Rule::in(['aktif', 'nonaktif'])],
-        ], [
-            'user_id.exists' => 'Akun user tidak valid.',
-            'user_id.unique' => 'Akun user sudah terhubung dengan data pegawai lain.',
-            'nip.unique' => 'NIP sudah digunakan.',
-            'nama_pegawai.required' => 'Nama pegawai wajib diisi.',
-            'jenis_pegawai.required' => 'Jenis pegawai wajib dipilih.',
-            'foto.image' => 'File foto harus berupa gambar.',
-            'foto.mimes' => 'Format foto harus jpg, jpeg, png, atau webp.',
-            'foto.max' => 'Ukuran foto maksimal 2MB.',
-            'status.required' => 'Status wajib dipilih.',
-        ]);
+        ], $this->validationMessages());
 
-        // penjelasan: Jika ada upload foto, foto disimpan ke storage/app/public/foto/pegawai.
-        // penjelasan: Path file disimpan ke kolom foto.
+        // penjelasan: Jika akun login dipilih, pastikan role akun sesuai dengan jenis pegawai.
+        // penjelasan: Contoh jenis pegawai guru harus memakai user role guru.
+        if (! empty($validated['user_id'])) {
+            $user = User::find($validated['user_id']);
+
+            if (! $user || $user->role !== $validated['jenis_pegawai']) {
+                return back()
+                    ->withErrors(['user_id' => 'Akun login harus sesuai dengan jenis pegawai yang dipilih.'])
+                    ->withInput();
+            }
+        }
+
+        $validated = $this->normalizeNullableFields($validated);
+
         if ($request->hasFile('foto')) {
             $validated['foto'] = $request->file('foto')->store('foto/pegawai', 'public');
         }
 
-        // penjelasan: Membuat data pegawai baru ke tabel pegawais.
         Pegawai::create($validated);
 
         return redirect()
@@ -134,8 +133,10 @@ class PegawaiController extends Controller
             ->with('success', 'Data pegawai berhasil ditambahkan.');
     }
 
-    // penjelasan: Method show digunakan untuk menampilkan detail pegawai.
-    // penjelasan: Parameter Pegawai $pegawai otomatis mengambil data berdasarkan id di URL.
+    /**
+     * penjelasan: Method show digunakan untuk menampilkan detail pegawai.
+     * penjelasan: Parameter Pegawai $pegawai otomatis mengambil data berdasarkan id di URL.
+     */
     public function show(Pegawai $pegawai)
     {
         $pegawai->load('user');
@@ -145,11 +146,11 @@ class PegawaiController extends Controller
         return view('admin.pages.pegawai.show', compact('pegawai', 'routePrefix'));
     }
 
-    // penjelasan: Method edit digunakan untuk menampilkan form edit pegawai.
+    /**
+     * penjelasan: Method edit digunakan untuk menampilkan form edit pegawai.
+     */
     public function edit(Pegawai $pegawai)
     {
-        // penjelasan: Mengambil akun guru/staff aktif yang belum punya pegawai.
-        // penjelasan: Jika pegawai sudah punya user_id, user tersebut tetap ditampilkan agar tidak hilang saat edit.
         $users = User::whereIn('role', ['guru', 'staff'])
             ->where('status', 'aktif')
             ->where(function ($query) use ($pegawai) {
@@ -164,10 +165,13 @@ class PegawaiController extends Controller
         return view('admin.pages.pegawai.edit', compact('pegawai', 'users', 'routePrefix'));
     }
 
-    // penjelasan: Method update digunakan untuk menyimpan perubahan data pegawai.
+    /**
+     * penjelasan: Method update digunakan untuk menyimpan perubahan data pegawai.
+     * penjelasan: Untuk edit pegawai, jabatan dan alamat tetap mengikuti aturan sebelumnya.
+     * penjelasan: Jika ingin edit juga wajib jabatan/alamat, aturan nullable bisa diganti menjadi required.
+     */
     public function update(Request $request, Pegawai $pegawai)
     {
-        // penjelasan: Validasi unique mengabaikan data pegawai yang sedang diedit.
         $validated = $request->validate([
             'user_id' => [
                 'nullable',
@@ -188,19 +192,20 @@ class PegawaiController extends Controller
             'alamat' => ['nullable', 'string'],
             'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'status' => ['required', Rule::in(['aktif', 'nonaktif'])],
-        ], [
-            'user_id.exists' => 'Akun user tidak valid.',
-            'user_id.unique' => 'Akun user sudah terhubung dengan data pegawai lain.',
-            'nip.unique' => 'NIP sudah digunakan.',
-            'nama_pegawai.required' => 'Nama pegawai wajib diisi.',
-            'jenis_pegawai.required' => 'Jenis pegawai wajib dipilih.',
-            'foto.image' => 'File foto harus berupa gambar.',
-            'foto.mimes' => 'Format foto harus jpg, jpeg, png, atau webp.',
-            'foto.max' => 'Ukuran foto maksimal 2MB.',
-            'status.required' => 'Status wajib dipilih.',
-        ]);
+        ], $this->validationMessages());
 
-        // penjelasan: Jika ada foto baru, foto lama dihapus agar storage tidak penuh.
+        if (! empty($validated['user_id'])) {
+            $user = User::find($validated['user_id']);
+
+            if (! $user || $user->role !== $validated['jenis_pegawai']) {
+                return back()
+                    ->withErrors(['user_id' => 'Akun login harus sesuai dengan jenis pegawai yang dipilih.'])
+                    ->withInput();
+            }
+        }
+
+        $validated = $this->normalizeNullableFields($validated);
+
         if ($request->hasFile('foto')) {
             if ($pegawai->foto && Storage::disk('public')->exists($pegawai->foto)) {
                 Storage::disk('public')->delete($pegawai->foto);
@@ -209,7 +214,6 @@ class PegawaiController extends Controller
             $validated['foto'] = $request->file('foto')->store('foto/pegawai', 'public');
         }
 
-        // penjelasan: Update data pegawai pada tabel pegawais.
         $pegawai->update($validated);
 
         return redirect()
@@ -217,14 +221,106 @@ class PegawaiController extends Controller
             ->with('success', 'Data pegawai berhasil diperbarui.');
     }
 
-    // penjelasan: Method toggleStatus digunakan untuk mengubah status pegawai aktif/nonaktif.
-    // penjelasan: Data tidak dihapus permanen agar riwayat absensi dan jadwal tetap aman.
+    /**
+     * penjelasan: Method toggleStatus digunakan untuk mengubah status pegawai aktif/nonaktif.
+     * penjelasan: Data tidak dihapus permanen agar riwayat absensi dan jadwal tetap aman.
+     */
     public function toggleStatus(Pegawai $pegawai)
     {
+        $newStatus = $pegawai->status === 'aktif' ? 'nonaktif' : 'aktif';
+
         $pegawai->update([
-            'status' => $pegawai->status === 'aktif' ? 'nonaktif' : 'aktif',
+            'status' => $newStatus,
         ]);
 
-        return back()->with('success', 'Status pegawai berhasil diubah.');
+        $message = $newStatus === 'aktif'
+            ? 'Pegawai berhasil diaktifkan.'
+            : 'Pegawai berhasil dinonaktifkan.';
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * penjelasan: Method validationMessages menyimpan semua pesan validasi Bahasa Indonesia.
+     * penjelasan: Pesan ini dipakai saat tambah dan edit pegawai.
+     */
+    private function validationMessages(): array
+    {
+        return [
+            'user_id.exists' => 'Akun login tidak valid.',
+            'user_id.unique' => 'Akun login sudah terhubung dengan data pegawai lain.',
+
+            'nip.string' => 'NIP harus berupa teks.',
+            'nip.max' => 'NIP maksimal 50 karakter.',
+            'nip.unique' => 'NIP sudah digunakan.',
+
+            'nama_pegawai.required' => 'Nama pegawai wajib diisi.',
+            'nama_pegawai.string' => 'Nama pegawai harus berupa teks.',
+            'nama_pegawai.max' => 'Nama pegawai maksimal 150 karakter.',
+
+            'jenis_pegawai.required' => 'Jenis pegawai wajib dipilih.',
+            'jenis_pegawai.in' => 'Jenis pegawai yang dipilih tidak valid.',
+
+            'jabatan.required' => 'Jabatan wajib diisi.',
+            'jabatan.string' => 'Jabatan harus berupa teks.',
+            'jabatan.max' => 'Jabatan maksimal 150 karakter.',
+
+            'jenis_kelamin.in' => 'Jenis kelamin yang dipilih tidak valid.',
+
+            'no_hp.string' => 'Nomor HP harus berupa teks.',
+            'no_hp.max' => 'Nomor HP maksimal 30 karakter.',
+
+            'alamat.required' => 'Alamat wajib diisi.',
+            'alamat.string' => 'Alamat harus berupa teks.',
+
+            'foto.image' => 'File foto harus berupa gambar.',
+            'foto.mimes' => 'Format foto harus jpg, jpeg, png, atau webp.',
+            'foto.max' => 'Ukuran foto maksimal 2MB.',
+
+            'status.required' => 'Status wajib dipilih.',
+            'status.in' => 'Status yang dipilih tidak valid.',
+        ];
+    }
+
+    /**
+     * penjelasan: Method normalizeNullableFields membersihkan input kosong menjadi null.
+     * penjelasan: Ini menjaga data database lebih rapi.
+     */
+    private function normalizeNullableFields(array $validated): array
+    {
+        $nullableFields = [
+            'user_id',
+            'nip',
+            'jenis_kelamin',
+            'no_hp',
+        ];
+
+        foreach ($nullableFields as $field) {
+            if (array_key_exists($field, $validated) && $validated[$field] === '') {
+                $validated[$field] = null;
+            }
+        }
+
+        if (isset($validated['nama_pegawai'])) {
+            $validated['nama_pegawai'] = trim($validated['nama_pegawai']);
+        }
+
+        if (isset($validated['nip']) && $validated['nip'] !== null) {
+            $validated['nip'] = trim($validated['nip']);
+        }
+
+        if (isset($validated['jabatan']) && $validated['jabatan'] !== null) {
+            $validated['jabatan'] = trim($validated['jabatan']);
+        }
+
+        if (isset($validated['no_hp']) && $validated['no_hp'] !== null) {
+            $validated['no_hp'] = trim($validated['no_hp']);
+        }
+
+        if (isset($validated['alamat']) && $validated['alamat'] !== null) {
+            $validated['alamat'] = trim($validated['alamat']);
+        }
+
+        return $validated;
     }
 }

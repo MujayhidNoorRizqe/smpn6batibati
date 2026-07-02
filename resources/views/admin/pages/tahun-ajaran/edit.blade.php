@@ -1,5 +1,9 @@
 {{-- penjelasan: File ini adalah halaman edit tahun ajaran. --}}
 {{-- penjelasan: File ini dipanggil oleh TahunAjaranController method edit(). --}}
+{{-- penjelasan: Form pada file ini dikirim ke TahunAjaranController method update(). --}}
+{{-- penjelasan: Alert validasi tidak ditulis lokal karena sudah ditampilkan global dari admin.components.alert. --}}
+{{-- penjelasan: Nama tahun ajaran dan status wajib diisi. --}}
+{{-- penjelasan: Tanggal mulai dan tanggal selesai bersifat opsional, tetapi tetap dipilih manual jika diisi. --}}
 
 @extends('admin.layouts.app')
 
@@ -16,64 +20,118 @@
                 </div>
 
                 <div class="card-body">
-                    @if ($errors->any())
-                        <div class="alert alert-danger">
-                            @foreach ($errors->all() as $error)
-                                <div>{{ $error }}</div>
-                            @endforeach
-                        </div>
-                    @endif
+
+                    <div class="alert alert-info border-0 shadow-sm rounded-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Field bertanda <span class="text-danger">*</span> wajib diisi.
+                    </div>
 
                     <form action="{{ route($routePrefix . '.tahun-ajaran.update', $tahunAjaran) }}" method="POST">
                         @csrf
                         @method('PUT')
 
                         <div class="mb-3">
-                            <label class="form-label">Nama Tahun Ajaran</label>
+                            <label class="form-label">
+                                Nama Tahun Ajaran <span class="text-danger">*</span>
+                            </label>
+
                             <input
                                 type="text"
                                 name="nama_tahun_ajaran"
-                                class="form-control"
+                                class="form-control @error('nama_tahun_ajaran') is-invalid @enderror"
                                 value="{{ old('nama_tahun_ajaran', $tahunAjaran->nama_tahun_ajaran) }}"
+                                placeholder="Contoh: 2025/2026"
                                 required
                             >
+
+                            @error('nama_tahun_ajaran')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Tanggal Mulai</label>
+                            <label class="form-label">
+                                Tanggal Mulai <span class="text-muted">(Opsional)</span>
+                            </label>
+
                             <input
                                 type="date"
                                 name="tanggal_mulai"
-                                class="form-control"
+                                class="form-control @error('tanggal_mulai') is-invalid @enderror"
                                 value="{{ old('tanggal_mulai', $tahunAjaran->tanggal_mulai ? $tahunAjaran->tanggal_mulai->format('Y-m-d') : '') }}"
                             >
+
+                            @error('tanggal_mulai')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+
+                            <small class="text-muted">
+                                Tanggal dipilih manual sesuai kalender akademik.
+                            </small>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Tanggal Selesai</label>
+                            <label class="form-label">
+                                Tanggal Selesai <span class="text-muted">(Opsional)</span>
+                            </label>
+
                             <input
                                 type="date"
                                 name="tanggal_selesai"
-                                class="form-control"
+                                class="form-control @error('tanggal_selesai') is-invalid @enderror"
                                 value="{{ old('tanggal_selesai', $tahunAjaran->tanggal_selesai ? $tahunAjaran->tanggal_selesai->format('Y-m-d') : '') }}"
                             >
+
+                            @error('tanggal_selesai')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+
+                            <small class="text-muted">
+                                Jika diisi, tanggal selesai tidak boleh lebih kecil dari tanggal mulai.
+                            </small>
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label">Status</label>
-                            <select name="status" class="form-select" required>
+                            <label class="form-label">
+                                Status <span class="text-danger">*</span>
+                            </label>
+
+                            <select name="status" class="form-select @error('status') is-invalid @enderror" required>
+                                <option value="">Pilih Status</option>
                                 <option value="nonaktif" {{ old('status', $tahunAjaran->status) === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
                                 <option value="aktif" {{ old('status', $tahunAjaran->status) === 'aktif' ? 'selected' : '' }}>Aktif</option>
                             </select>
-                            <small class="text-muted">Jika dibuat aktif, tahun ajaran aktif lainnya otomatis menjadi nonaktif.</small>
+
+                            @error('status')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+
+                            <small class="text-muted">
+                                Jika dibuat aktif, tahun ajaran aktif lainnya otomatis menjadi nonaktif.
+                            </small>
                         </div>
 
                         <div class="d-flex justify-content-end gap-2">
-                            <a href="{{ route($routePrefix . '.tahun-ajaran.index') }}" class="btn btn-outline-secondary">
+                            <a
+                                href="{{ route($routePrefix . '.tahun-ajaran.index') }}"
+                                class="btn btn-outline-secondary"
+                                data-confirm="true"
+                                data-confirm-message="Batalkan edit tahun ajaran? Perubahan yang belum disimpan akan hilang."
+                                data-confirm-yes="Ya, Batalkan"
+                                data-confirm-yes-class="btn-danger"
+                            >
                                 Batal
                             </a>
 
-                            <button type="submit" class="btn btn-primary">
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                                data-confirm="true"
+                                data-confirm-message="Apakah Anda yakin ingin menyimpan perubahan data tahun ajaran ini?"
+                                data-confirm-yes="Ya, Simpan Perubahan"
+                                data-confirm-yes-class="btn-primary"
+                            >
+                                <i class="bi bi-save me-1"></i>
                                 Simpan Perubahan
                             </button>
                         </div>

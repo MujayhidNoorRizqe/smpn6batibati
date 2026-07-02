@@ -1,8 +1,9 @@
 {{-- penjelasan: File ini adalah layout utama dashboard internal. --}}
-{{-- penjelasan: Layout ini dipakai oleh halaman dashboard super admin, admin, guru, staff, dan halaman admin lain nantinya. --}}
+{{-- penjelasan: Layout ini dipakai oleh halaman dashboard super admin, admin, guru, staff, dan halaman admin lain. --}}
 {{-- penjelasan: File ini dipanggil oleh halaman lain menggunakan @extends('admin.layouts.app'). --}}
 {{-- penjelasan: File ini tidak menyimpan CSS utama secara langsung, karena CSS dipisah ke public/assets/admin/css/admin.css. --}}
 {{-- penjelasan: File ini juga memanggil JavaScript dashboard dari public/assets/admin/js/admin.js. --}}
+{{-- penjelasan: Alert global dan modal konfirmasi global juga dipanggil dari layout ini agar semua halaman punya standar UI yang sama. --}}
 
 <!DOCTYPE html>
 <html lang="id">
@@ -25,6 +26,9 @@
     {{-- penjelasan: admin.css adalah file CSS buatan kita sendiri untuk tampilan dashboard admin/internal. --}}
     {{-- penjelasan: asset() digunakan Laravel untuk mengambil file dari folder public. --}}
     <link href="{{ asset('assets/admin/css/admin.css') }}" rel="stylesheet">
+
+    {{-- penjelasan: @stack('styles') disediakan jika ada halaman tertentu yang membutuhkan CSS tambahan. --}}
+    @stack('styles')
 </head>
 
 <body>
@@ -47,7 +51,15 @@
             {{-- penjelasan: admin-content adalah area isi halaman. --}}
             <main class="admin-content">
 
-                {{-- penjelasan: @yield('content') akan diisi oleh halaman dashboard masing-masing role. --}}
+                {{-- penjelasan: Area ini dipakai JavaScript untuk menampilkan alert custom Bahasa Indonesia. --}}
+                {{-- penjelasan: Contohnya saat field wajib belum diisi dan validasi dicegah dari popup browser default. --}}
+                <div id="globalClientAlertArea"></div>
+
+                {{-- penjelasan: Alert global dipanggil sebelum isi halaman. --}}
+                {{-- penjelasan: Semua pesan berhasil, gagal, peringatan, informasi, dan error validasi Laravel akan tampil otomatis di sini. --}}
+                @include('admin.components.alert')
+
+                {{-- penjelasan: @yield('content') akan diisi oleh halaman dashboard atau halaman modul yang sedang dibuka. --}}
                 @yield('content')
 
             </main>
@@ -66,11 +78,18 @@
         <i class="bi bi-arrow-up"></i>
     </button>
 
-    {{-- penjelasan: Bootstrap JavaScript dipakai untuk komponen Bootstrap yang butuh interaksi. --}}
+    {{-- penjelasan: Modal konfirmasi global dipanggil sekali di layout. --}}
+    {{-- penjelasan: Modal ini bisa dipakai semua halaman untuk aksi logout, hapus, batal, setujui, tolak, aktif/nonaktif, dan aksi penting lain. --}}
+    @include('admin.components.confirm-modal')
+
+    {{-- penjelasan: Bootstrap JavaScript dipakai untuk komponen Bootstrap yang butuh interaksi seperti modal, dropdown, dan alert dismiss. --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     {{-- penjelasan: admin.js adalah file JavaScript buatan kita sendiri untuk fitur dashboard. --}}
-    {{-- penjelasan: Saat ini admin.js dipakai untuk fitur tombol scroll up. --}}
+    {{-- penjelasan: File ini dipakai untuk tombol scroll up, modal konfirmasi global, dan validasi custom Bahasa Indonesia. --}}
     <script src="{{ asset('assets/admin/js/admin.js') }}"></script>
+
+    {{-- penjelasan: @stack('scripts') disediakan jika ada halaman tertentu yang membutuhkan JavaScript tambahan. --}}
+    @stack('scripts')
 </body>
 </html>

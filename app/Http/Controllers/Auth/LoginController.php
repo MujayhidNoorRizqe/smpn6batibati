@@ -2,36 +2,41 @@
 
 // penjelasan: File ini adalah controller untuk menangani login dan logout.
 // penjelasan: Controller adalah penghubung antara route, proses sistem, dan view.
+// penjelasan: Controller ini mengatur validasi login, alert login gagal, alert akun nonaktif, dan redirect dashboard sesuai role.
 
 namespace App\Http\Controllers\Auth;
 
-// penjelasan: Controller adalah class dasar bawaan Laravel untuk membuat controller.
 use App\Http\Controllers\Controller;
+// penjelasan: Controller adalah class dasar bawaan Laravel untuk membuat controller.
 
-// penjelasan: Request digunakan untuk mengambil data yang dikirim dari form login.
 use Illuminate\Http\Request;
+// penjelasan: Request digunakan untuk mengambil data yang dikirim dari form login.
 
-// penjelasan: Auth adalah fitur bawaan Laravel untuk proses login, logout, dan mengecek user.
 use Illuminate\Support\Facades\Auth;
+// penjelasan: Auth adalah fitur bawaan Laravel untuk proses login, logout, dan mengecek user.
 
-// penjelasan: ValidationException digunakan untuk menampilkan pesan error validasi login.
 use Illuminate\Validation\ValidationException;
+// penjelasan: ValidationException digunakan untuk menampilkan pesan error validasi login.
 
 class LoginController extends Controller
 {
-    // penjelasan: Method ini menampilkan halaman login.
-    // penjelasan: Method ini dipanggil oleh route GET /login.
+    /**
+     * penjelasan: Method ini menampilkan halaman login.
+     * penjelasan: Method ini dipanggil oleh route GET /login.
+     */
     public function showLoginForm()
     {
         return view('auth.login');
     }
 
-    // penjelasan: Method ini memproses login user.
-    // penjelasan: Method ini dipanggil oleh form login melalui route POST /login.
+    /**
+     * penjelasan: Method ini memproses login user.
+     * penjelasan: Method ini dipanggil oleh form login melalui route POST /login.
+     */
     public function login(Request $request)
     {
         // penjelasan: Validasi memastikan email dan password wajib diisi.
-        // penjelasan: Jika kosong atau format email salah, Laravel akan menampilkan error.
+        // penjelasan: Pesan dibuat Bahasa Indonesia agar tampilan validasi lebih jelas.
         $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
@@ -46,11 +51,14 @@ class LoginController extends Controller
         $credentials = $request->only('email', 'password');
 
         // penjelasan: Auth::attempt mencoba login menggunakan email dan password.
-        // penjelasan: Jika gagal, pesan error akan ditampilkan.
+        // penjelasan: Jika gagal, user dikembalikan ke login dengan alert Login gagal.
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
-            throw ValidationException::withMessages([
-                'email' => 'Email atau password salah.',
-            ]);
+            return back()
+                ->withErrors([
+                    'email' => 'Email atau password salah. Periksa kembali data login Anda.',
+                ])
+                ->with('login_error_type', 'failed')
+                ->onlyInput('email');
         }
 
         // penjelasan: regenerate digunakan untuk memperbarui session setelah login.
@@ -61,15 +69,19 @@ class LoginController extends Controller
         $user = Auth::user();
 
         // penjelasan: Jika akun user nonaktif, sistem langsung logout dan menolak akses.
+        // penjelasan: Alert yang muncul adalah Akun nonaktif.
         if ($user->status !== 'aktif') {
             Auth::logout();
 
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return back()->withErrors([
-                'email' => 'Akun Anda sedang nonaktif. Silakan hubungi administrator.',
-            ])->onlyInput('email');
+            return back()
+                ->withErrors([
+                    'email' => 'Akun Anda sedang nonaktif. Silakan hubungi administrator.',
+                ])
+                ->with('login_error_type', 'inactive')
+                ->onlyInput('email');
         }
 
         // penjelasan: Menyimpan waktu terakhir user login ke kolom last_login_at.
@@ -81,8 +93,10 @@ class LoginController extends Controller
         return redirect()->intended($this->redirectByRole($user->role));
     }
 
-    // penjelasan: Method ini digunakan untuk logout.
-    // penjelasan: Method ini dipanggil oleh tombol logout di dashboard.
+    /**
+     * penjelasan: Method ini digunakan untuk logout.
+     * penjelasan: Method ini dipanggil oleh tombol logout di dashboard.
+     */
     public function logout(Request $request)
     {
         // penjelasan: Auth::logout menghapus status login user.
@@ -98,8 +112,10 @@ class LoginController extends Controller
         return redirect()->route('login')->with('success', 'Anda berhasil logout.');
     }
 
-    // penjelasan: Method private ini menentukan tujuan dashboard berdasarkan role user.
-    // penjelasan: Method ini hanya dipakai di dalam LoginController.
+    /**
+     * penjelasan: Method private ini menentukan tujuan dashboard berdasarkan role user.
+     * penjelasan: Method ini hanya dipakai di dalam LoginController.
+     */
     private function redirectByRole(string $role): string
     {
         return match ($role) {

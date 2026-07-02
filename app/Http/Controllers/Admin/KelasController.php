@@ -4,45 +4,52 @@
 // penjelasan: Controller ini dipakai oleh Super Admin dan Admin.
 // penjelasan: Controller ini mengatur daftar kelas, tambah kelas, detail kelas, edit kelas, update kelas, dan aktif/nonaktif kelas.
 // penjelasan: File ini dipanggil dari route /super-admin/kelas dan /admin/kelas.
+// penjelasan: Semua validasi memakai pesan Bahasa Indonesia agar selaras dengan UI global.
+// penjelasan: Nama kelas, tingkat, wali kelas, dan status kelas wajib diisi.
+// penjelasan: Controller ini juga menghitung total jumlah siswa per kelas melalui relasi murids.
 
 namespace App\Http\Controllers\Admin;
 
-// penjelasan: Controller adalah class dasar bawaan Laravel untuk membuat controller.
 use App\Http\Controllers\Controller;
+// penjelasan: Controller adalah class dasar bawaan Laravel untuk membuat controller.
 
-// penjelasan: Model Kelas digunakan untuk mengambil, menyimpan, dan mengubah data pada tabel kelas.
 use App\Models\Kelas;
+// penjelasan: Model Kelas digunakan untuk mengambil, menyimpan, dan mengubah data pada tabel kelas.
 
-// penjelasan: Model Pegawai digunakan untuk mengambil data guru aktif sebagai pilihan wali kelas.
 use App\Models\Pegawai;
+// penjelasan: Model Pegawai digunakan untuk mengambil data guru aktif sebagai pilihan wali kelas.
 
-// penjelasan: Request digunakan untuk mengambil data dari form tambah/edit kelas.
 use Illuminate\Http\Request;
+// penjelasan: Request digunakan untuk mengambil data dari form tambah/edit kelas.
 
-// penjelasan: Rule digunakan untuk validasi unique dan pilihan nilai tertentu.
 use Illuminate\Validation\Rule;
+// penjelasan: Rule digunakan untuk validasi unique dan pilihan nilai tertentu.
 
 class KelasController extends Controller
 {
-    // penjelasan: Method routePrefix digunakan agar route bisa menyesuaikan role login.
-    // penjelasan: Jika user login sebagai super_admin, route prefix-nya super-admin.
-    // penjelasan: Jika user login sebagai admin, route prefix-nya admin.
+    /**
+     * penjelasan: Method routePrefix digunakan agar route bisa menyesuaikan role login.
+     * penjelasan: Jika user login sebagai super_admin, route prefix-nya super-admin.
+     * penjelasan: Jika user login sebagai admin, route prefix-nya admin.
+     */
     private function routePrefix(): string
     {
         return auth()->user()->role === 'super_admin' ? 'super-admin' : 'admin';
     }
 
-    // penjelasan: Method index digunakan untuk menampilkan daftar kelas.
-    // penjelasan: Method ini dipanggil oleh route GET /super-admin/kelas atau /admin/kelas.
+    /**
+     * penjelasan: Method index digunakan untuk menampilkan daftar kelas.
+     * penjelasan: Method ini dipanggil oleh route GET /super-admin/kelas atau /admin/kelas.
+     */
     public function index(Request $request)
     {
-        // penjelasan: Query awal mengambil data kelas beserta relasi waliKelas.
-        // penjelasan: with('waliKelas') digunakan agar nama wali kelas bisa tampil di tabel.
-        $query = Kelas::with('waliKelas');
+        // penjelasan: with('waliKelas') mengambil relasi wali kelas.
+        // penjelasan: withCount(['murids as total_siswa']) menghitung jumlah siswa pada setiap kelas.
+        $query = Kelas::with('waliKelas')
+            ->withCount(['murids as total_siswa']);
 
-        // penjelasan: Jika input search diisi, sistem mencari berdasarkan nama_kelas atau tingkat.
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
                 $q->where('nama_kelas', 'like', '%' . $search . '%')
@@ -50,31 +57,27 @@ class KelasController extends Controller
             });
         }
 
-        // penjelasan: Filter tingkat digunakan untuk menampilkan kelas tingkat tertentu.
         if ($request->filled('tingkat')) {
             $query->where('tingkat', $request->tingkat);
         }
 
-        // penjelasan: Filter status digunakan untuk menampilkan kelas aktif atau nonaktif.
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // penjelasan: Data kelas diurutkan dari yang terbaru dan ditampilkan 10 data per halaman.
         $kelasList = $query->latest()->paginate(10)->withQueryString();
 
-        // penjelasan: routePrefix dikirim ke view agar tombol/link menyesuaikan role login.
         $routePrefix = $this->routePrefix();
 
         return view('admin.pages.kelas.index', compact('kelasList', 'routePrefix'));
     }
 
-    // penjelasan: Method create digunakan untuk menampilkan form tambah kelas.
-    // penjelasan: Method ini dipanggil oleh route GET /super-admin/kelas/create atau /admin/kelas/create.
+    /**
+     * penjelasan: Method create digunakan untuk menampilkan form tambah kelas.
+     * penjelasan: Method ini dipanggil oleh route GET /super-admin/kelas/create atau /admin/kelas/create.
+     */
     public function create()
     {
-        // penjelasan: Mengambil data pegawai yang jenisnya guru dan statusnya aktif.
-        // penjelasan: Data ini digunakan sebagai pilihan wali kelas.
         $gurus = Pegawai::where('jenis_pegawai', 'guru')
             ->where('status', 'aktif')
             ->orderBy('nama_pegawai')
@@ -85,41 +88,23 @@ class KelasController extends Controller
         return view('admin.pages.kelas.create', compact('gurus', 'routePrefix'));
     }
 
-    // penjelasan: Method store digunakan untuk menyimpan data kelas baru.
-    // penjelasan: Method ini dipanggil oleh form tambah kelas melalui route POST /kelas.
+    /**
+     * penjelasan: Method store digunakan untuk menyimpan data kelas baru.
+     * penjelasan: Method ini dipanggil oleh form tambah kelas.
+     */
     public function store(Request $request)
     {
-        // penjelasan: Validasi memastikan data kelas sesuai aturan.
-        // penjelasan: nama_kelas wajib unik agar kelas tidak dobel.
-        // penjelasan: wali_kelas_id nullable karena kelas boleh dibuat tanpa wali kelas dulu.
         $validated = $request->validate([
             'nama_kelas' => ['required', 'string', 'max:50', 'unique:kelas,nama_kelas'],
-            'tingkat' => ['required', 'string', 'max:10'],
-            'wali_kelas_id' => ['nullable', 'exists:pegawais,id'],
+            'tingkat' => ['required', Rule::in(['7', '8', '9'])],
+            'wali_kelas_id' => ['required', 'exists:pegawais,id'],
             'status' => ['required', Rule::in(['aktif', 'nonaktif'])],
-        ], [
-            'nama_kelas.required' => 'Nama kelas wajib diisi.',
-            'nama_kelas.unique' => 'Nama kelas sudah digunakan.',
-            'tingkat.required' => 'Tingkat kelas wajib diisi.',
-            'wali_kelas_id.exists' => 'Wali kelas tidak valid.',
-            'status.required' => 'Status wajib dipilih.',
-        ]);
+        ], $this->validationMessages());
 
-        // penjelasan: Jika wali kelas dipilih, sistem memastikan pegawai tersebut adalah guru aktif.
-        if (! empty($validated['wali_kelas_id'])) {
-            $guruValid = Pegawai::where('id', $validated['wali_kelas_id'])
-                ->where('jenis_pegawai', 'guru')
-                ->where('status', 'aktif')
-                ->exists();
+        $this->ensureValidWaliKelas($validated['wali_kelas_id']);
 
-            if (! $guruValid) {
-                return back()
-                    ->withErrors(['wali_kelas_id' => 'Wali kelas harus berasal dari pegawai guru yang aktif.'])
-                    ->withInput();
-            }
-        }
+        $validated['nama_kelas'] = strtoupper(trim($validated['nama_kelas']));
 
-        // penjelasan: Membuat data kelas baru ke tabel kelas.
         Kelas::create($validated);
 
         return redirect()
@@ -127,25 +112,35 @@ class KelasController extends Controller
             ->with('success', 'Data kelas berhasil ditambahkan.');
     }
 
-    // penjelasan: Method show digunakan untuk menampilkan detail kelas.
-    // penjelasan: Parameter Kelas $kelas otomatis mengambil data berdasarkan id pada URL.
+    /**
+     * penjelasan: Method show digunakan untuk menampilkan detail kelas.
+     * penjelasan: Parameter Kelas $kelas otomatis mengambil data berdasarkan id pada URL.
+     */
     public function show(Kelas $kelas)
     {
-        // penjelasan: load('waliKelas') mengambil data wali kelas yang terhubung.
+        // penjelasan: load('waliKelas') mengambil data wali kelas.
+        // penjelasan: loadCount(['murids as total_siswa']) menghitung jumlah siswa pada kelas ini.
         $kelas->load('waliKelas');
+        $kelas->loadCount(['murids as total_siswa']);
 
         $routePrefix = $this->routePrefix();
 
         return view('admin.pages.kelas.show', compact('kelas', 'routePrefix'));
     }
 
-    // penjelasan: Method edit digunakan untuk menampilkan form edit kelas.
-    // penjelasan: Method ini dipanggil oleh route GET /kelas/{kelas}/edit.
+    /**
+     * penjelasan: Method edit digunakan untuk menampilkan form edit kelas.
+     * penjelasan: Method ini dipanggil oleh route GET /kelas/{kelas}/edit.
+     */
     public function edit(Kelas $kelas)
     {
-        // penjelasan: Mengambil guru aktif untuk pilihan wali kelas.
-        $gurus = Pegawai::where('jenis_pegawai', 'guru')
-            ->where('status', 'aktif')
+        $gurus = Pegawai::where(function ($query) use ($kelas) {
+                $query->where(function ($q) {
+                    $q->where('jenis_pegawai', 'guru')
+                        ->where('status', 'aktif');
+                })
+                ->orWhere('id', $kelas->wali_kelas_id);
+            })
             ->orderBy('nama_pegawai')
             ->get();
 
@@ -154,11 +149,12 @@ class KelasController extends Controller
         return view('admin.pages.kelas.edit', compact('kelas', 'gurus', 'routePrefix'));
     }
 
-    // penjelasan: Method update digunakan untuk menyimpan perubahan data kelas.
-    // penjelasan: Method ini dipanggil oleh form edit kelas melalui route PUT /kelas/{kelas}.
+    /**
+     * penjelasan: Method update digunakan untuk menyimpan perubahan data kelas.
+     * penjelasan: Method ini dipanggil oleh form edit kelas.
+     */
     public function update(Request $request, Kelas $kelas)
     {
-        // penjelasan: Validasi unique pada nama_kelas mengabaikan data kelas yang sedang diedit.
         $validated = $request->validate([
             'nama_kelas' => [
                 'required',
@@ -166,32 +162,15 @@ class KelasController extends Controller
                 'max:50',
                 Rule::unique('kelas', 'nama_kelas')->ignore($kelas->id),
             ],
-            'tingkat' => ['required', 'string', 'max:10'],
-            'wali_kelas_id' => ['nullable', 'exists:pegawais,id'],
+            'tingkat' => ['required', Rule::in(['7', '8', '9'])],
+            'wali_kelas_id' => ['required', 'exists:pegawais,id'],
             'status' => ['required', Rule::in(['aktif', 'nonaktif'])],
-        ], [
-            'nama_kelas.required' => 'Nama kelas wajib diisi.',
-            'nama_kelas.unique' => 'Nama kelas sudah digunakan.',
-            'tingkat.required' => 'Tingkat kelas wajib diisi.',
-            'wali_kelas_id.exists' => 'Wali kelas tidak valid.',
-            'status.required' => 'Status wajib dipilih.',
-        ]);
+        ], $this->validationMessages());
 
-        // penjelasan: Jika wali kelas dipilih, sistem memastikan pegawai tersebut guru aktif.
-        if (! empty($validated['wali_kelas_id'])) {
-            $guruValid = Pegawai::where('id', $validated['wali_kelas_id'])
-                ->where('jenis_pegawai', 'guru')
-                ->where('status', 'aktif')
-                ->exists();
+        $this->ensureValidWaliKelas($validated['wali_kelas_id']);
 
-            if (! $guruValid) {
-                return back()
-                    ->withErrors(['wali_kelas_id' => 'Wali kelas harus berasal dari pegawai guru yang aktif.'])
-                    ->withInput();
-            }
-        }
+        $validated['nama_kelas'] = strtoupper(trim($validated['nama_kelas']));
 
-        // penjelasan: Update data kelas pada tabel kelas.
         $kelas->update($validated);
 
         return redirect()
@@ -199,14 +178,66 @@ class KelasController extends Controller
             ->with('success', 'Data kelas berhasil diperbarui.');
     }
 
-    // penjelasan: Method toggleStatus digunakan untuk mengubah status kelas aktif/nonaktif.
-    // penjelasan: Data kelas tidak dihapus permanen agar nanti relasi murid, jadwal, dan nilai tetap aman.
+    /**
+     * penjelasan: Method toggleStatus digunakan untuk mengubah status kelas aktif/nonaktif.
+     * penjelasan: Data kelas tidak dihapus permanen agar relasi murid, jadwal, dan nilai tetap aman.
+     */
     public function toggleStatus(Kelas $kelas)
     {
+        $newStatus = $kelas->status === 'aktif' ? 'nonaktif' : 'aktif';
+
         $kelas->update([
-            'status' => $kelas->status === 'aktif' ? 'nonaktif' : 'aktif',
+            'status' => $newStatus,
         ]);
 
-        return back()->with('success', 'Status kelas berhasil diubah.');
+        $message = $newStatus === 'aktif'
+            ? 'Kelas berhasil diaktifkan.'
+            : 'Kelas berhasil dinonaktifkan.';
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * penjelasan: Method ensureValidWaliKelas memastikan wali kelas berasal dari pegawai jenis guru yang aktif.
+     * penjelasan: Ini penting karena wali kelas wajib dan tidak boleh berasal dari staff/nonaktif.
+     */
+    private function ensureValidWaliKelas(int|string $waliKelasId): void
+    {
+        $guruValid = Pegawai::where('id', $waliKelasId)
+            ->where('jenis_pegawai', 'guru')
+            ->where('status', 'aktif')
+            ->exists();
+
+        if (! $guruValid) {
+            abort(
+                redirect()
+                    ->back()
+                    ->withErrors(['wali_kelas_id' => 'Wali kelas wajib berasal dari pegawai guru yang aktif.'])
+                    ->withInput()
+            );
+        }
+    }
+
+    /**
+     * penjelasan: Method validationMessages menyimpan semua pesan validasi Bahasa Indonesia.
+     * penjelasan: Pesan ini dipakai saat tambah dan edit kelas.
+     */
+    private function validationMessages(): array
+    {
+        return [
+            'nama_kelas.required' => 'Nama kelas wajib diisi.',
+            'nama_kelas.string' => 'Nama kelas harus berupa teks.',
+            'nama_kelas.max' => 'Nama kelas maksimal 50 karakter.',
+            'nama_kelas.unique' => 'Nama kelas sudah digunakan.',
+
+            'tingkat.required' => 'Tingkat wajib dipilih.',
+            'tingkat.in' => 'Tingkat yang dipilih tidak valid.',
+
+            'wali_kelas_id.required' => 'Wali kelas wajib dipilih.',
+            'wali_kelas_id.exists' => 'Wali kelas tidak valid.',
+
+            'status.required' => 'Status kelas wajib dipilih.',
+            'status.in' => 'Status kelas yang dipilih tidak valid.',
+        ];
     }
 }

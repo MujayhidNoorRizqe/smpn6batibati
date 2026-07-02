@@ -2,12 +2,11 @@
 
 // penjelasan: File ini mengatur semua route atau URL aplikasi.
 // penjelasan: Route adalah jalur alamat yang dibuka user di browser.
-// penjelasan: Contoh route: /login, /super-admin/dashboard, /super-admin/pegawai, /super-admin/murid.
-// penjelasan: File ini sekarang mengatur route public, login, logout, dashboard, manajemen user, data pegawai, data kelas, data wali murid, data murid, mata pelajaran, tahun ajaran, semester, dan jadwal pelajaran.
+// penjelasan: Contoh route: /login, /super-admin/dashboard, /super-admin/pegawai, /guru/pengajuan-absensi-pegawai.
+// penjelasan: File ini mengatur route public, login, logout, dashboard, manajemen user, data master, akademik, jadwal pelajaran, pengajuan absensi pegawai, dan persetujuan absensi pegawai.
 
 use App\Http\Controllers\Admin\JadwalPelajaranController;
 // penjelasan: JadwalPelajaranController digunakan untuk modul Jadwal Pelajaran.
-// penjelasan: Controller ini mengatur daftar jadwal, tambah, edit, detail, aktif/nonaktif, dan validasi bentrok jadwal.
 
 use App\Http\Controllers\Admin\KelasController;
 // penjelasan: KelasController digunakan untuk modul Data Kelas.
@@ -21,19 +20,25 @@ use App\Http\Controllers\Admin\MuridController;
 use App\Http\Controllers\Admin\PegawaiController;
 // penjelasan: PegawaiController digunakan untuk modul Data Pegawai.
 
+use App\Http\Controllers\Admin\PersetujuanAbsensiPegawaiController;
+// penjelasan: PersetujuanAbsensiPegawaiController digunakan oleh admin dan super admin.
+// penjelasan: Controller ini menangani daftar pengajuan, detail pengajuan, ACC, dan tolak pengajuan absensi pegawai.
+
 use App\Http\Controllers\Admin\SemesterController;
 // penjelasan: SemesterController digunakan untuk modul Semester.
-// penjelasan: Controller ini mengatur daftar semester, tambah, edit, detail, dan aktif/nonaktif semester.
 
 use App\Http\Controllers\Admin\TahunAjaranController;
 // penjelasan: TahunAjaranController digunakan untuk modul Tahun Ajaran.
-// penjelasan: Controller ini mengatur daftar tahun ajaran, tambah, edit, detail, dan aktif/nonaktif tahun ajaran.
 
 use App\Http\Controllers\Admin\WaliMuridController;
 // penjelasan: WaliMuridController digunakan untuk modul Data Wali Murid.
 
 use App\Http\Controllers\Auth\LoginController;
 // penjelasan: LoginController digunakan untuk fitur login dan logout.
+
+use App\Http\Controllers\Pegawai\PengajuanAbsensiPegawaiController;
+// penjelasan: PengajuanAbsensiPegawaiController digunakan oleh guru dan staff.
+// penjelasan: Controller ini menangani pengajuan dinas, sakit, izin, edit pengajuan, detail pengajuan, dan pembatalan pengajuan.
 
 use App\Http\Controllers\SuperAdmin\UserController;
 // penjelasan: UserController digunakan untuk fitur Manajemen User oleh Super Admin.
@@ -47,7 +52,7 @@ use Illuminate\Support\Facades\Route;
 // =========================================================
 
 Route::get('/', function () {
-    // penjelasan: auth()->check() digunakan untuk mengecek apakah user sudah login atau belum.
+    // penjelasan: Jika user belum login, arahkan ke halaman login.
     if (! auth()->check()) {
         return redirect()->route('login');
     }
@@ -224,26 +229,30 @@ Route::middleware(['auth', 'role:super_admin'])
         // JADWAL PELAJARAN
         // =================================================
 
-        // penjelasan: Route GET /super-admin/jadwal-pelajaran digunakan untuk menampilkan daftar jadwal pelajaran.
         Route::get('/jadwal-pelajaran', [JadwalPelajaranController::class, 'index'])->name('jadwal-pelajaran.index');
-
-        // penjelasan: Route GET /super-admin/jadwal-pelajaran/create digunakan untuk menampilkan form tambah jadwal pelajaran.
         Route::get('/jadwal-pelajaran/create', [JadwalPelajaranController::class, 'create'])->name('jadwal-pelajaran.create');
-
-        // penjelasan: Route POST /super-admin/jadwal-pelajaran digunakan untuk menyimpan jadwal pelajaran baru.
         Route::post('/jadwal-pelajaran', [JadwalPelajaranController::class, 'store'])->name('jadwal-pelajaran.store');
-
-        // penjelasan: Route GET /super-admin/jadwal-pelajaran/{jadwalPelajaran} digunakan untuk menampilkan detail jadwal.
         Route::get('/jadwal-pelajaran/{jadwalPelajaran}', [JadwalPelajaranController::class, 'show'])->name('jadwal-pelajaran.show');
-
-        // penjelasan: Route GET /super-admin/jadwal-pelajaran/{jadwalPelajaran}/edit digunakan untuk menampilkan form edit jadwal.
         Route::get('/jadwal-pelajaran/{jadwalPelajaran}/edit', [JadwalPelajaranController::class, 'edit'])->name('jadwal-pelajaran.edit');
-
-        // penjelasan: Route PUT /super-admin/jadwal-pelajaran/{jadwalPelajaran} digunakan untuk menyimpan perubahan jadwal.
         Route::put('/jadwal-pelajaran/{jadwalPelajaran}', [JadwalPelajaranController::class, 'update'])->name('jadwal-pelajaran.update');
-
-        // penjelasan: Route PATCH ini digunakan untuk mengubah status jadwal aktif/nonaktif.
         Route::patch('/jadwal-pelajaran/{jadwalPelajaran}/toggle-status', [JadwalPelajaranController::class, 'toggleStatus'])->name('jadwal-pelajaran.toggle-status');
+
+
+        // =================================================
+        // PERSETUJUAN ABSENSI PEGAWAI
+        // =================================================
+
+        Route::get('/persetujuan-absensi-pegawai', [PersetujuanAbsensiPegawaiController::class, 'index'])
+            ->name('persetujuan-absensi-pegawai.index');
+
+        Route::get('/persetujuan-absensi-pegawai/{pengajuanAbsensiPegawai}', [PersetujuanAbsensiPegawaiController::class, 'show'])
+            ->name('persetujuan-absensi-pegawai.show');
+
+        Route::patch('/persetujuan-absensi-pegawai/{pengajuanAbsensiPegawai}/approve', [PersetujuanAbsensiPegawaiController::class, 'approve'])
+            ->name('persetujuan-absensi-pegawai.approve');
+
+        Route::patch('/persetujuan-absensi-pegawai/{pengajuanAbsensiPegawai}/reject', [PersetujuanAbsensiPegawaiController::class, 'reject'])
+            ->name('persetujuan-absensi-pegawai.reject');
     });
 
 
@@ -360,26 +369,30 @@ Route::middleware(['auth', 'role:admin'])
         // JADWAL PELAJARAN
         // =================================================
 
-        // penjelasan: Route GET /admin/jadwal-pelajaran digunakan untuk menampilkan daftar jadwal pelajaran.
         Route::get('/jadwal-pelajaran', [JadwalPelajaranController::class, 'index'])->name('jadwal-pelajaran.index');
-
-        // penjelasan: Route GET /admin/jadwal-pelajaran/create digunakan untuk menampilkan form tambah jadwal pelajaran.
         Route::get('/jadwal-pelajaran/create', [JadwalPelajaranController::class, 'create'])->name('jadwal-pelajaran.create');
-
-        // penjelasan: Route POST /admin/jadwal-pelajaran digunakan untuk menyimpan jadwal pelajaran baru.
         Route::post('/jadwal-pelajaran', [JadwalPelajaranController::class, 'store'])->name('jadwal-pelajaran.store');
-
-        // penjelasan: Route GET /admin/jadwal-pelajaran/{jadwalPelajaran} digunakan untuk menampilkan detail jadwal.
         Route::get('/jadwal-pelajaran/{jadwalPelajaran}', [JadwalPelajaranController::class, 'show'])->name('jadwal-pelajaran.show');
-
-        // penjelasan: Route GET /admin/jadwal-pelajaran/{jadwalPelajaran}/edit digunakan untuk menampilkan form edit jadwal.
         Route::get('/jadwal-pelajaran/{jadwalPelajaran}/edit', [JadwalPelajaranController::class, 'edit'])->name('jadwal-pelajaran.edit');
-
-        // penjelasan: Route PUT /admin/jadwal-pelajaran/{jadwalPelajaran} digunakan untuk menyimpan perubahan jadwal.
         Route::put('/jadwal-pelajaran/{jadwalPelajaran}', [JadwalPelajaranController::class, 'update'])->name('jadwal-pelajaran.update');
-
-        // penjelasan: Route PATCH ini digunakan untuk mengubah status jadwal aktif/nonaktif.
         Route::patch('/jadwal-pelajaran/{jadwalPelajaran}/toggle-status', [JadwalPelajaranController::class, 'toggleStatus'])->name('jadwal-pelajaran.toggle-status');
+
+
+        // =================================================
+        // PERSETUJUAN ABSENSI PEGAWAI
+        // =================================================
+
+        Route::get('/persetujuan-absensi-pegawai', [PersetujuanAbsensiPegawaiController::class, 'index'])
+            ->name('persetujuan-absensi-pegawai.index');
+
+        Route::get('/persetujuan-absensi-pegawai/{pengajuanAbsensiPegawai}', [PersetujuanAbsensiPegawaiController::class, 'show'])
+            ->name('persetujuan-absensi-pegawai.show');
+
+        Route::patch('/persetujuan-absensi-pegawai/{pengajuanAbsensiPegawai}/approve', [PersetujuanAbsensiPegawaiController::class, 'approve'])
+            ->name('persetujuan-absensi-pegawai.approve');
+
+        Route::patch('/persetujuan-absensi-pegawai/{pengajuanAbsensiPegawai}/reject', [PersetujuanAbsensiPegawaiController::class, 'reject'])
+            ->name('persetujuan-absensi-pegawai.reject');
     });
 
 
@@ -391,9 +404,42 @@ Route::middleware(['auth', 'role:guru'])
     ->prefix('guru')
     ->name('guru.')
     ->group(function () {
+
+        // =================================================
+        // DASHBOARD GURU
+        // =================================================
+
         Route::get('/dashboard', function () {
             return view('admin.pages.dashboard.guru.index');
         })->name('dashboard');
+
+
+        // =================================================
+        // PENGAJUAN ABSENSI PEGAWAI
+        // =================================================
+
+        Route::get('/pengajuan-absensi-pegawai', [PengajuanAbsensiPegawaiController::class, 'index'])
+            ->name('pengajuan-absensi-pegawai.index');
+
+        Route::get('/pengajuan-absensi-pegawai/create', [PengajuanAbsensiPegawaiController::class, 'create'])
+            ->name('pengajuan-absensi-pegawai.create');
+
+        Route::post('/pengajuan-absensi-pegawai', [PengajuanAbsensiPegawaiController::class, 'store'])
+            ->name('pengajuan-absensi-pegawai.store');
+
+        // penjelasan: Route edit harus tersedia karena pengajuan status menunggu boleh diperbaiki oleh guru.
+        Route::get('/pengajuan-absensi-pegawai/{pengajuanAbsensiPegawai}/edit', [PengajuanAbsensiPegawaiController::class, 'edit'])
+            ->name('pengajuan-absensi-pegawai.edit');
+
+        // penjelasan: Route update menyimpan perubahan pengajuan selama status masih menunggu.
+        Route::put('/pengajuan-absensi-pegawai/{pengajuanAbsensiPegawai}', [PengajuanAbsensiPegawaiController::class, 'update'])
+            ->name('pengajuan-absensi-pegawai.update');
+
+        Route::get('/pengajuan-absensi-pegawai/{pengajuanAbsensiPegawai}', [PengajuanAbsensiPegawaiController::class, 'show'])
+            ->name('pengajuan-absensi-pegawai.show');
+
+        Route::patch('/pengajuan-absensi-pegawai/{pengajuanAbsensiPegawai}/cancel', [PengajuanAbsensiPegawaiController::class, 'cancel'])
+            ->name('pengajuan-absensi-pegawai.cancel');
     });
 
 
@@ -405,7 +451,40 @@ Route::middleware(['auth', 'role:staff'])
     ->prefix('staff')
     ->name('staff.')
     ->group(function () {
+
+        // =================================================
+        // DASHBOARD STAFF
+        // =================================================
+
         Route::get('/dashboard', function () {
             return view('admin.pages.dashboard.staff.index');
         })->name('dashboard');
+
+
+        // =================================================
+        // PENGAJUAN ABSENSI PEGAWAI
+        // =================================================
+
+        Route::get('/pengajuan-absensi-pegawai', [PengajuanAbsensiPegawaiController::class, 'index'])
+            ->name('pengajuan-absensi-pegawai.index');
+
+        Route::get('/pengajuan-absensi-pegawai/create', [PengajuanAbsensiPegawaiController::class, 'create'])
+            ->name('pengajuan-absensi-pegawai.create');
+
+        Route::post('/pengajuan-absensi-pegawai', [PengajuanAbsensiPegawaiController::class, 'store'])
+            ->name('pengajuan-absensi-pegawai.store');
+
+        // penjelasan: Route edit harus tersedia karena pengajuan status menunggu boleh diperbaiki oleh staff.
+        Route::get('/pengajuan-absensi-pegawai/{pengajuanAbsensiPegawai}/edit', [PengajuanAbsensiPegawaiController::class, 'edit'])
+            ->name('pengajuan-absensi-pegawai.edit');
+
+        // penjelasan: Route update menyimpan perubahan pengajuan selama status masih menunggu.
+        Route::put('/pengajuan-absensi-pegawai/{pengajuanAbsensiPegawai}', [PengajuanAbsensiPegawaiController::class, 'update'])
+            ->name('pengajuan-absensi-pegawai.update');
+
+        Route::get('/pengajuan-absensi-pegawai/{pengajuanAbsensiPegawai}', [PengajuanAbsensiPegawaiController::class, 'show'])
+            ->name('pengajuan-absensi-pegawai.show');
+
+        Route::patch('/pengajuan-absensi-pegawai/{pengajuanAbsensiPegawai}/cancel', [PengajuanAbsensiPegawaiController::class, 'cancel'])
+            ->name('pengajuan-absensi-pegawai.cancel');
     });

@@ -3,6 +3,9 @@
 {{-- penjelasan: Halaman ini bisa diakses oleh Super Admin dan Admin. --}}
 {{-- penjelasan: Data $kelasList dikirim dari controller menggunakan compact('kelasList', 'routePrefix'). --}}
 {{-- penjelasan: routePrefix dipakai agar link bisa menyesuaikan apakah user login sebagai super-admin atau admin. --}}
+{{-- penjelasan: Alert berhasil, gagal, dan validasi sudah memakai komponen global admin.components.alert. --}}
+{{-- penjelasan: Tombol aktif/nonaktif memakai modal konfirmasi global melalui data-confirm="true". --}}
+{{-- penjelasan: Halaman ini juga menampilkan total jumlah siswa per kelas dari relasi murids. --}}
 
 @extends('admin.layouts.app')
 
@@ -17,11 +20,10 @@
                     <div>
                         <h4 class="fw-bold mb-1">Data Kelas</h4>
                         <p class="text-muted mb-0">
-                            Kelola data kelas, tingkat, dan wali kelas.
+                            Kelola data kelas, tingkat, wali kelas, status kelas, dan jumlah siswa per kelas.
                         </p>
                     </div>
 
-                    {{-- penjelasan: Tombol ini mengarah ke halaman tambah kelas. --}}
                     <a href="{{ route($routePrefix . '.kelas.create') }}" class="btn btn-primary">
                         <i class="bi bi-plus-circle me-1"></i>
                         Tambah Kelas
@@ -31,19 +33,14 @@
         </div>
     </div>
 
-    {{-- penjelasan: Alert sukses tampil setelah data berhasil ditambah, diedit, atau status diubah. --}}
-    @if (session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    {{-- penjelasan: Card ini berisi form pencarian dan filter kelas. --}}
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <form action="{{ route($routePrefix . '.kelas.index') }}" method="GET" class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">Cari Kelas</label>
+                    <label class="form-label">
+                        Cari Kelas
+                    </label>
+
                     <input
                         type="text"
                         name="search"
@@ -54,7 +51,10 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Tingkat</label>
+                    <label class="form-label">
+                        Tingkat
+                    </label>
+
                     <select name="tingkat" class="form-select">
                         <option value="">Semua Tingkat</option>
                         <option value="7" {{ request('tingkat') === '7' ? 'selected' : '' }}>7</option>
@@ -64,7 +64,10 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Status</label>
+                    <label class="form-label">
+                        Status
+                    </label>
+
                     <select name="status" class="form-select">
                         <option value="">Semua Status</option>
                         <option value="aktif" {{ request('status') === 'aktif' ? 'selected' : '' }}>Aktif</option>
@@ -82,7 +85,6 @@
         </div>
     </div>
 
-    {{-- penjelasan: Card ini berisi tabel data kelas. --}}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
             <div>
@@ -103,6 +105,7 @@
                             <th>Nama Kelas</th>
                             <th>Tingkat</th>
                             <th>Wali Kelas</th>
+                            <th>Jumlah Siswa</th>
                             <th>Status</th>
                             <th class="text-end table-action-column">Aksi</th>
                         </tr>
@@ -110,8 +113,17 @@
 
                     <tbody>
                         @forelse ($kelasList as $kelas)
+                            @php
+                                // penjelasan: Pesan konfirmasi dibuat sesuai status kelas.
+                                $confirmMessage = $kelas->status === 'aktif'
+                                    ? 'Apakah Anda yakin ingin menonaktifkan kelas ini? Data tidak dihapus, hanya statusnya menjadi nonaktif.'
+                                    : 'Apakah Anda yakin ingin mengaktifkan kelas ini kembali?';
+                            @endphp
+
                             <tr>
-                                <td class="fw-semibold">{{ $kelas->nama_kelas }}</td>
+                                <td class="fw-semibold">
+                                    {{ $kelas->nama_kelas }}
+                                </td>
 
                                 <td>
                                     <span class="badge bg-primary-subtle text-primary">
@@ -123,14 +135,29 @@
                                     @if ($kelas->waliKelas)
                                         {{ $kelas->waliKelas->nama_pegawai }}
                                     @else
-                                        <span class="text-muted">Belum ditentukan</span>
+                                        <span class="badge bg-warning-subtle text-warning">
+                                            Belum ditentukan
+                                        </span>
                                     @endif
                                 </td>
 
                                 <td>
-                                    <span class="badge {{ $kelas->status === 'aktif' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
-                                        {{ ucfirst($kelas->status) }}
+                                    {{-- penjelasan: total_siswa berasal dari withCount relasi murids di KelasController. --}}
+                                    <span class="badge bg-info-subtle text-info">
+                                        {{ $kelas->total_siswa ?? 0 }} siswa
                                     </span>
+                                </td>
+
+                                <td>
+                                    @if ($kelas->status === 'aktif')
+                                        <span class="badge bg-success-subtle text-success">
+                                            Aktif
+                                        </span>
+                                    @else
+                                        <span class="badge bg-danger-subtle text-danger">
+                                            Nonaktif
+                                        </span>
+                                    @endif
                                 </td>
 
                                 <td class="text-end">
@@ -152,7 +179,10 @@
                                             <button
                                                 type="submit"
                                                 class="btn btn-sm action-btn {{ $kelas->status === 'aktif' ? 'btn-outline-danger' : 'btn-outline-success' }}"
-                                                onclick="return confirm('Yakin ingin mengubah status kelas ini?')"
+                                                data-confirm="true"
+                                                data-confirm-message="{{ $confirmMessage }}"
+                                                data-confirm-yes="{{ $kelas->status === 'aktif' ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan' }}"
+                                                data-confirm-yes-class="{{ $kelas->status === 'aktif' ? 'btn-danger' : 'btn-success' }}"
                                             >
                                                 @if ($kelas->status === 'aktif')
                                                     <i class="bi bi-x-circle"></i>
@@ -168,7 +198,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center text-muted py-4">
+                                <td colspan="6" class="text-center text-muted py-4">
                                     Data kelas belum tersedia.
                                 </td>
                             </tr>

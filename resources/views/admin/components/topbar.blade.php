@@ -1,6 +1,7 @@
 {{-- penjelasan: File ini adalah component topbar dashboard. --}}
 {{-- penjelasan: File ini dipanggil oleh layout utama admin.layouts.app. --}}
 {{-- penjelasan: Topbar menampilkan judul halaman, nama user, role, status akun, dan tombol logout. --}}
+{{-- penjelasan: Tombol logout memakai modal konfirmasi global agar user bisa memilih Ya atau Batal. --}}
 
 @php
     // penjelasan: Mengambil user yang sedang login.
@@ -38,13 +39,18 @@
         </div>
 
         {{-- penjelasan: Form logout dikirim ke route logout. --}}
-        {{-- penjelasan: Route logout memanggil LoginController method logout(). --}}
+        {{-- penjelasan: data-confirm membuat logout memakai popup konfirmasi global. --}}
         <form action="{{ route('logout') }}" method="POST" class="mb-0">
-
-            {{-- penjelasan: @csrf adalah token keamanan form bawaan Laravel. --}}
             @csrf
 
-            <button type="submit" class="btn btn-outline-danger btn-sm">
+            <button
+                type="submit"
+                class="btn btn-outline-danger btn-sm"
+                data-confirm="true"
+                data-confirm-message="Apakah Anda yakin ingin logout dari sistem?"
+                data-confirm-yes="Ya, Logout"
+                data-confirm-yes-class="btn-danger"
+            >
                 <i class="bi bi-box-arrow-right"></i>
                 Logout
             </button>

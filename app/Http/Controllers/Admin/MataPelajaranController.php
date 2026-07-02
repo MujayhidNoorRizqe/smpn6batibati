@@ -4,45 +4,46 @@
 // penjelasan: Controller ini dipakai oleh Super Admin dan Admin.
 // penjelasan: Controller ini mengatur daftar mata pelajaran, tambah, detail, edit, update, dan aktif/nonaktif.
 // penjelasan: File ini dipanggil dari route /super-admin/mata-pelajaran dan /admin/mata-pelajaran.
+// penjelasan: Semua validasi memakai pesan Bahasa Indonesia agar selaras dengan UI global.
+// penjelasan: Kode mapel, nama mapel, kelompok, dan status wajib diisi.
+// penjelasan: Deskripsi bersifat opsional.
 
 namespace App\Http\Controllers\Admin;
 
-// penjelasan: Controller adalah class dasar bawaan Laravel untuk membuat controller.
 use App\Http\Controllers\Controller;
+// penjelasan: Controller adalah class dasar bawaan Laravel untuk membuat controller.
 
-// penjelasan: Model MataPelajaran digunakan untuk mengambil, menyimpan, dan mengubah data pada tabel mata_pelajarans.
 use App\Models\MataPelajaran;
+// penjelasan: Model MataPelajaran digunakan untuk mengambil, menyimpan, dan mengubah data pada tabel mata_pelajarans.
 
-// penjelasan: Request digunakan untuk mengambil data dari form tambah dan edit mata pelajaran.
 use Illuminate\Http\Request;
+// penjelasan: Request digunakan untuk mengambil data dari form tambah dan edit mata pelajaran.
 
-// penjelasan: Rule digunakan untuk validasi unique dan pilihan nilai tertentu.
 use Illuminate\Validation\Rule;
+// penjelasan: Rule digunakan untuk validasi unique dan pilihan nilai tertentu.
 
 class MataPelajaranController extends Controller
 {
-    // penjelasan: Method routePrefix digunakan agar route bisa menyesuaikan role user yang sedang login.
-    // penjelasan: Jika user login sebagai super_admin, maka prefix route adalah super-admin.
-    // penjelasan: Jika user login sebagai admin, maka prefix route adalah admin.
-    // penjelasan: Dengan method ini, view yang sama bisa dipakai oleh Super Admin dan Admin.
+    /**
+     * penjelasan: Method routePrefix digunakan agar route bisa menyesuaikan role user yang sedang login.
+     * penjelasan: Jika user login sebagai super_admin, maka prefix route adalah super-admin.
+     * penjelasan: Jika user login sebagai admin, maka prefix route adalah admin.
+     */
     private function routePrefix(): string
     {
         return auth()->user()->role === 'super_admin' ? 'super-admin' : 'admin';
     }
 
-    // penjelasan: Method index digunakan untuk menampilkan daftar mata pelajaran.
-    // penjelasan: Method ini dipanggil oleh route GET /super-admin/mata-pelajaran atau /admin/mata-pelajaran.
-    // penjelasan: Method ini juga memproses pencarian dan filter kelompok/status.
+    /**
+     * penjelasan: Method index digunakan untuk menampilkan daftar mata pelajaran.
+     * penjelasan: Method ini dipanggil oleh route GET /super-admin/mata-pelajaran atau /admin/mata-pelajaran.
+     */
     public function index(Request $request)
     {
-        // penjelasan: Query awal dibuat dari model MataPelajaran.
-        // penjelasan: Query dibuat bertahap agar mudah ditambah filter.
         $query = MataPelajaran::query();
 
-        // penjelasan: Jika input search diisi, sistem mencari berdasarkan kode_mapel atau nama_mapel.
-        // penjelasan: where(function) digunakan agar kondisi pencarian dikelompokkan dengan benar.
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = trim($request->search);
 
             $query->where(function ($q) use ($search) {
                 $q->where('kode_mapel', 'like', '%' . $search . '%')
@@ -50,101 +51,87 @@ class MataPelajaranController extends Controller
             });
         }
 
-        // penjelasan: Filter kelompok digunakan untuk menampilkan mapel umum, muatan lokal, atau ekstrakurikuler.
         if ($request->filled('kelompok')) {
             $query->where('kelompok', $request->kelompok);
         }
 
-        // penjelasan: Filter status digunakan untuk menampilkan mata pelajaran aktif atau nonaktif.
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // penjelasan: Data diurutkan dari terbaru dan ditampilkan 10 data per halaman.
-        // penjelasan: withQueryString() menjaga filter tetap aktif saat pindah halaman pagination.
         $mataPelajarans = $query->latest()->paginate(10)->withQueryString();
 
-        // penjelasan: routePrefix dikirim ke view agar tombol tambah/edit/detail/status sesuai role login.
         $routePrefix = $this->routePrefix();
 
-        // penjelasan: View ini menampilkan daftar mata pelajaran.
         return view('admin.pages.mata-pelajaran.index', compact('mataPelajarans', 'routePrefix'));
     }
 
-    // penjelasan: Method create digunakan untuk menampilkan form tambah mata pelajaran.
-    // penjelasan: Method ini dipanggil oleh route GET /mata-pelajaran/create.
+    /**
+     * penjelasan: Method create digunakan untuk menampilkan form tambah mata pelajaran.
+     */
     public function create()
     {
-        // penjelasan: routePrefix dikirim agar form action menyesuaikan role login.
         $routePrefix = $this->routePrefix();
 
-        // penjelasan: View ini menampilkan form tambah mata pelajaran.
         return view('admin.pages.mata-pelajaran.create', compact('routePrefix'));
     }
 
-    // penjelasan: Method store digunakan untuk menyimpan mata pelajaran baru.
-    // penjelasan: Method ini dipanggil oleh form tambah mata pelajaran melalui method POST.
+    /**
+     * penjelasan: Method store digunakan untuk menyimpan mata pelajaran baru.
+     */
     public function store(Request $request)
     {
-        // penjelasan: Validasi memastikan data yang masuk sesuai aturan.
-        // penjelasan: kode_mapel wajib unik agar kode mata pelajaran tidak dobel.
-        // penjelasan: kelompok wajib salah satu dari umum, muatan_lokal, atau ekstrakurikuler.
-        // penjelasan: status wajib salah satu dari aktif atau nonaktif.
+        // penjelasan: Kode mapel dirapikan sebelum validasi agar format database konsisten.
+        $request->merge([
+            'kode_mapel' => strtoupper(trim((string) $request->input('kode_mapel'))),
+        ]);
+
         $validated = $request->validate([
             'kode_mapel' => ['required', 'string', 'max:30', 'unique:mata_pelajarans,kode_mapel'],
             'nama_mapel' => ['required', 'string', 'max:150'],
             'kelompok' => ['required', Rule::in(['umum', 'muatan_lokal', 'ekstrakurikuler'])],
             'deskripsi' => ['nullable', 'string'],
             'status' => ['required', Rule::in(['aktif', 'nonaktif'])],
-        ], [
-            'kode_mapel.required' => 'Kode mata pelajaran wajib diisi.',
-            'kode_mapel.unique' => 'Kode mata pelajaran sudah digunakan.',
-            'nama_mapel.required' => 'Nama mata pelajaran wajib diisi.',
-            'kelompok.required' => 'Kelompok mata pelajaran wajib dipilih.',
-            'status.required' => 'Status wajib dipilih.',
-        ]);
+        ], $this->validationMessages());
 
-        // penjelasan: Kode mapel dibuat huruf besar agar format data konsisten.
-        // penjelasan: Contoh input mtk akan disimpan menjadi MTK.
-        $validated['kode_mapel'] = strtoupper($validated['kode_mapel']);
+        $validated = $this->normalizeFields($validated);
 
-        // penjelasan: Data yang sudah valid disimpan ke tabel mata_pelajarans.
         MataPelajaran::create($validated);
 
-        // penjelasan: Setelah berhasil simpan, user diarahkan kembali ke daftar mata pelajaran.
         return redirect()
             ->route($this->routePrefix() . '.mata-pelajaran.index')
             ->with('success', 'Data mata pelajaran berhasil ditambahkan.');
     }
 
-    // penjelasan: Method show digunakan untuk menampilkan detail mata pelajaran.
-    // penjelasan: Parameter MataPelajaran $mataPelajaran otomatis diambil berdasarkan id pada URL.
+    /**
+     * penjelasan: Method show digunakan untuk menampilkan detail mata pelajaran.
+     */
     public function show(MataPelajaran $mataPelajaran)
     {
-        // penjelasan: routePrefix dikirim ke view untuk tombol kembali dan edit.
         $routePrefix = $this->routePrefix();
 
-        // penjelasan: View ini menampilkan detail data mata pelajaran.
         return view('admin.pages.mata-pelajaran.show', compact('mataPelajaran', 'routePrefix'));
     }
 
-    // penjelasan: Method edit digunakan untuk menampilkan form edit mata pelajaran.
-    // penjelasan: Parameter MataPelajaran $mataPelajaran otomatis mengambil data berdasarkan id pada URL.
+    /**
+     * penjelasan: Method edit digunakan untuk menampilkan form edit mata pelajaran.
+     */
     public function edit(MataPelajaran $mataPelajaran)
     {
-        // penjelasan: routePrefix dikirim agar form update menyesuaikan role login.
         $routePrefix = $this->routePrefix();
 
-        // penjelasan: View ini menampilkan form edit mata pelajaran.
         return view('admin.pages.mata-pelajaran.edit', compact('mataPelajaran', 'routePrefix'));
     }
 
-    // penjelasan: Method update digunakan untuk menyimpan perubahan data mata pelajaran.
-    // penjelasan: Method ini dipanggil oleh form edit melalui route PUT /mata-pelajaran/{mataPelajaran}.
+    /**
+     * penjelasan: Method update digunakan untuk menyimpan perubahan data mata pelajaran.
+     */
     public function update(Request $request, MataPelajaran $mataPelajaran)
     {
-        // penjelasan: Validasi unique pada kode_mapel mengabaikan data mata pelajaran yang sedang diedit.
-        // penjelasan: Ini penting agar kode milik data yang sama tidak dianggap duplikat.
+        $request->merge([
+            'kode_mapel' => strtoupper(trim((string) $request->input('kode_mapel'))),
+        ]);
+
         $validated = $request->validate([
             'kode_mapel' => [
                 'required',
@@ -156,38 +143,75 @@ class MataPelajaranController extends Controller
             'kelompok' => ['required', Rule::in(['umum', 'muatan_lokal', 'ekstrakurikuler'])],
             'deskripsi' => ['nullable', 'string'],
             'status' => ['required', Rule::in(['aktif', 'nonaktif'])],
-        ], [
-            'kode_mapel.required' => 'Kode mata pelajaran wajib diisi.',
-            'kode_mapel.unique' => 'Kode mata pelajaran sudah digunakan.',
-            'nama_mapel.required' => 'Nama mata pelajaran wajib diisi.',
-            'kelompok.required' => 'Kelompok mata pelajaran wajib dipilih.',
-            'status.required' => 'Status wajib dipilih.',
-        ]);
+        ], $this->validationMessages());
 
-        // penjelasan: Kode mapel dibuat huruf besar agar formatnya konsisten.
-        $validated['kode_mapel'] = strtoupper($validated['kode_mapel']);
+        $validated = $this->normalizeFields($validated);
 
-        // penjelasan: Data mata pelajaran diperbarui pada tabel mata_pelajarans.
         $mataPelajaran->update($validated);
 
-        // penjelasan: Setelah berhasil update, user diarahkan ke daftar mata pelajaran.
         return redirect()
             ->route($this->routePrefix() . '.mata-pelajaran.index')
             ->with('success', 'Data mata pelajaran berhasil diperbarui.');
     }
 
-    // penjelasan: Method toggleStatus digunakan untuk mengubah status mata pelajaran aktif/nonaktif.
-    // penjelasan: Data mata pelajaran tidak dihapus permanen agar nanti relasi jadwal dan nilai tetap aman.
-    // penjelasan: Method ini dipanggil oleh tombol Aktifkan/Nonaktif pada halaman daftar mata pelajaran.
+    /**
+     * penjelasan: Method toggleStatus digunakan untuk mengubah status mata pelajaran aktif/nonaktif.
+     * penjelasan: Data mata pelajaran tidak dihapus permanen agar nanti relasi jadwal dan nilai tetap aman.
+     */
     public function toggleStatus(MataPelajaran $mataPelajaran)
     {
-        // penjelasan: Jika status sekarang aktif, maka diubah menjadi nonaktif.
-        // penjelasan: Jika status sekarang nonaktif, maka diubah menjadi aktif.
+        $newStatus = $mataPelajaran->status === 'aktif' ? 'nonaktif' : 'aktif';
+
         $mataPelajaran->update([
-            'status' => $mataPelajaran->status === 'aktif' ? 'nonaktif' : 'aktif',
+            'status' => $newStatus,
         ]);
 
-        // penjelasan: Setelah status berubah, user dikembalikan ke halaman sebelumnya.
-        return back()->with('success', 'Status mata pelajaran berhasil diubah.');
+        $message = $newStatus === 'aktif'
+            ? 'Mata pelajaran berhasil diaktifkan.'
+            : 'Mata pelajaran berhasil dinonaktifkan.';
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * penjelasan: Method validationMessages menyimpan pesan validasi Bahasa Indonesia.
+     */
+    private function validationMessages(): array
+    {
+        return [
+            'kode_mapel.required' => 'Kode mata pelajaran wajib diisi.',
+            'kode_mapel.string' => 'Kode mata pelajaran harus berupa teks.',
+            'kode_mapel.max' => 'Kode mata pelajaran maksimal 30 karakter.',
+            'kode_mapel.unique' => 'Kode mata pelajaran sudah digunakan.',
+
+            'nama_mapel.required' => 'Nama mata pelajaran wajib diisi.',
+            'nama_mapel.string' => 'Nama mata pelajaran harus berupa teks.',
+            'nama_mapel.max' => 'Nama mata pelajaran maksimal 150 karakter.',
+
+            'kelompok.required' => 'Kelompok mata pelajaran wajib dipilih.',
+            'kelompok.in' => 'Kelompok mata pelajaran yang dipilih tidak valid.',
+
+            'deskripsi.string' => 'Deskripsi harus berupa teks.',
+
+            'status.required' => 'Status wajib dipilih.',
+            'status.in' => 'Status yang dipilih tidak valid.',
+        ];
+    }
+
+    /**
+     * penjelasan: Method normalizeFields membersihkan input sebelum disimpan.
+     */
+    private function normalizeFields(array $validated): array
+    {
+        $validated['kode_mapel'] = strtoupper(trim($validated['kode_mapel']));
+        $validated['nama_mapel'] = trim($validated['nama_mapel']);
+
+        if (array_key_exists('deskripsi', $validated)) {
+            $validated['deskripsi'] = $validated['deskripsi'] === null || trim($validated['deskripsi']) === ''
+                ? null
+                : trim($validated['deskripsi']);
+        }
+
+        return $validated;
     }
 }

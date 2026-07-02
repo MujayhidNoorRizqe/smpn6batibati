@@ -1,6 +1,8 @@
 {{-- penjelasan: File ini adalah halaman daftar tahun ajaran. --}}
 {{-- penjelasan: File ini dipanggil oleh TahunAjaranController method index(). --}}
 {{-- penjelasan: Halaman ini bisa diakses oleh Super Admin dan Admin. --}}
+{{-- penjelasan: Alert berhasil, gagal, dan validasi sudah memakai komponen global admin.components.alert. --}}
+{{-- penjelasan: Tombol aktif/nonaktif memakai modal konfirmasi global melalui data-confirm="true". --}}
 
 @extends('admin.layouts.app')
 
@@ -15,7 +17,7 @@
                     <div>
                         <h4 class="fw-bold mb-1">Tahun Ajaran</h4>
                         <p class="text-muted mb-0">
-                            Kelola periode tahun ajaran sekolah.
+                            Kelola periode tahun ajaran sekolah dan status tahun ajaran aktif.
                         </p>
                     </div>
 
@@ -28,23 +30,14 @@
         </div>
     </div>
 
-    @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            @foreach ($errors->all() as $error)
-                <div>{{ $error }}</div>
-            @endforeach
-        </div>
-    @endif
-
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <form action="{{ route($routePrefix . '.tahun-ajaran.index') }}" method="GET" class="row g-3">
                 <div class="col-md-5">
-                    <label class="form-label">Cari Tahun Ajaran</label>
+                    <label class="form-label">
+                        Cari Tahun Ajaran
+                    </label>
+
                     <input
                         type="text"
                         name="search"
@@ -55,7 +48,10 @@
                 </div>
 
                 <div class="col-md-4">
-                    <label class="form-label">Status</label>
+                    <label class="form-label">
+                        Status 
+                    </label>
+
                     <select name="status" class="form-select">
                         <option value="">Semua Status</option>
                         <option value="aktif" {{ request('status') === 'aktif' ? 'selected' : '' }}>Aktif</option>
@@ -74,7 +70,7 @@
     </div>
 
     <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <div class="card-header bg-white border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
             <div>
                 <h6 class="fw-bold mb-0">Daftar Tahun Ajaran</h6>
                 <small class="text-muted">Periode akademik yang terdaftar</small>
@@ -100,8 +96,17 @@
 
                     <tbody>
                         @forelse ($tahunAjarans as $tahunAjaran)
+                            @php
+                                // penjelasan: Pesan konfirmasi dibuat sesuai status tahun ajaran.
+                                $confirmMessage = $tahunAjaran->status === 'aktif'
+                                    ? 'Apakah Anda yakin ingin menonaktifkan tahun ajaran ini? Jika dinonaktifkan, tidak ada tahun ajaran aktif sampai Anda mengaktifkan yang lain.'
+                                    : 'Apakah Anda yakin ingin mengaktifkan tahun ajaran ini? Tahun ajaran aktif lainnya otomatis menjadi nonaktif.';
+                            @endphp
+
                             <tr>
-                                <td class="fw-semibold">{{ $tahunAjaran->nama_tahun_ajaran }}</td>
+                                <td class="fw-semibold">
+                                    {{ $tahunAjaran->nama_tahun_ajaran }}
+                                </td>
 
                                 <td>
                                     {{ $tahunAjaran->tanggal_mulai ? $tahunAjaran->tanggal_mulai->format('d-m-Y') : '-' }}
@@ -116,9 +121,15 @@
                                 </td>
 
                                 <td>
-                                    <span class="badge {{ $tahunAjaran->status === 'aktif' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
-                                        {{ ucfirst($tahunAjaran->status) }}
-                                    </span>
+                                    @if ($tahunAjaran->status === 'aktif')
+                                        <span class="badge bg-success-subtle text-success">
+                                            Aktif
+                                        </span>
+                                    @else
+                                        <span class="badge bg-danger-subtle text-danger">
+                                            Nonaktif
+                                        </span>
+                                    @endif
                                 </td>
 
                                 <td class="text-end">
@@ -140,7 +151,10 @@
                                             <button
                                                 type="submit"
                                                 class="btn btn-sm action-btn {{ $tahunAjaran->status === 'aktif' ? 'btn-outline-danger' : 'btn-outline-success' }}"
-                                                onclick="return confirm('Yakin ingin mengubah status tahun ajaran ini?')"
+                                                data-confirm="true"
+                                                data-confirm-message="{{ $confirmMessage }}"
+                                                data-confirm-yes="{{ $tahunAjaran->status === 'aktif' ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan' }}"
+                                                data-confirm-yes-class="{{ $tahunAjaran->status === 'aktif' ? 'btn-danger' : 'btn-success' }}"
                                             >
                                                 @if ($tahunAjaran->status === 'aktif')
                                                     <i class="bi bi-x-circle"></i>

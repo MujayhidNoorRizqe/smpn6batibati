@@ -4,6 +4,8 @@
 {{-- penjelasan: Data $murids dikirim dari controller dan berisi daftar murid dengan relasi kelas dan wali murid. --}}
 {{-- penjelasan: Data $kelasList dikirim untuk pilihan filter kelas. --}}
 {{-- penjelasan: routePrefix dipakai agar link otomatis menyesuaikan role login, yaitu super-admin atau admin. --}}
+{{-- penjelasan: Alert berhasil, gagal, dan validasi sudah memakai komponen global admin.components.alert. --}}
+{{-- penjelasan: Tombol aktif/nonaktif memakai modal konfirmasi global melalui data-confirm="true". --}}
 
 @extends('admin.layouts.app')
 
@@ -18,7 +20,7 @@
                     <div>
                         <h4 class="fw-bold mb-1">Data Murid</h4>
                         <p class="text-muted mb-0">
-                            Kelola data siswa, kelas, dan wali murid.
+                            Kelola data siswa, kelas, jenis kelamin, NISN, tanggal lahir, dan wali murid yang terhubung.
                         </p>
                     </div>
 
@@ -31,18 +33,15 @@
         </div>
     </div>
 
-    @if (session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @endif
-
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <form action="{{ route($routePrefix . '.murid.index') }}" method="GET" class="row g-3">
 
                 <div class="col-md-3">
-                    <label class="form-label">Cari Murid</label>
+                    <label class="form-label">
+                        Cari Murid
+                    </label>
+
                     <input
                         type="text"
                         name="search"
@@ -53,9 +52,13 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Kelas</label>
+                    <label class="form-label">
+                        Kelas
+                    </label>
+
                     <select name="kelas_id" class="form-select">
                         <option value="">Semua Kelas</option>
+
                         @foreach ($kelasList as $kelas)
                             <option value="{{ $kelas->id }}" {{ request('kelas_id') == $kelas->id ? 'selected' : '' }}>
                                 {{ $kelas->nama_kelas }}
@@ -65,7 +68,10 @@
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label">Jenis Kelamin</label>
+                    <label class="form-label">
+                        Jenis Kelamin
+                    </label>
+
                     <select name="jenis_kelamin" class="form-select">
                         <option value="">Semua</option>
                         <option value="L" {{ request('jenis_kelamin') === 'L' ? 'selected' : '' }}>Laki-laki</option>
@@ -74,7 +80,10 @@
                 </div>
 
                 <div class="col-md-2">
-                    <label class="form-label">Status</label>
+                    <label class="form-label">
+                        Status
+                    </label>
+
                     <select name="status" class="form-select">
                         <option value="">Semua</option>
                         <option value="aktif" {{ request('status') === 'aktif' ? 'selected' : '' }}>Aktif</option>
@@ -122,6 +131,13 @@
 
                     <tbody>
                         @forelse ($murids as $murid)
+                            @php
+                                // penjelasan: Pesan konfirmasi dibuat sesuai status murid.
+                                $confirmMessage = $murid->status === 'aktif'
+                                    ? 'Apakah Anda yakin ingin menonaktifkan murid ini? Data tidak dihapus, hanya statusnya menjadi nonaktif.'
+                                    : 'Apakah Anda yakin ingin mengaktifkan murid ini kembali?';
+                            @endphp
+
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
@@ -135,10 +151,12 @@
 
                                         <div>
                                             <div class="fw-semibold">{{ $murid->nama_murid }}</div>
+
                                             <small class="text-muted">
-                                                {{ $murid->tempat_lahir ?? '-' }}
                                                 @if ($murid->tanggal_lahir)
-                                                    , {{ $murid->tanggal_lahir->format('d-m-Y') }}
+                                                    Lahir: {{ $murid->tanggal_lahir->format('d-m-Y') }}
+                                                @else
+                                                    Tanggal lahir belum diisi
                                                 @endif
                                             </small>
                                         </div>
@@ -156,16 +174,24 @@
                                             {{ $murid->kelas->nama_kelas }}
                                         </span>
                                     @else
-                                        <span class="text-muted">-</span>
+                                        <span class="badge bg-warning-subtle text-warning">
+                                            Belum ada kelas
+                                        </span>
                                     @endif
                                 </td>
 
                                 <td>
                                     @if ($murid->waliMurid)
                                         <div>{{ $murid->waliMurid->nama_wali }}</div>
-                                        <small class="text-muted">{{ ucfirst($murid->waliMurid->hubungan) }}</small>
+
+                                        <small class="text-muted">
+                                            {{ ucfirst($murid->waliMurid->hubungan) }} |
+                                            {{ $murid->waliMurid->no_whatsapp }}
+                                        </small>
                                     @else
-                                        <span class="text-muted">Belum ada</span>
+                                        <span class="badge bg-warning-subtle text-warning">
+                                            Belum terhubung
+                                        </span>
                                     @endif
                                 </td>
 
@@ -174,9 +200,15 @@
                                 </td>
 
                                 <td>
-                                    <span class="badge {{ $murid->status === 'aktif' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
-                                        {{ ucfirst($murid->status) }}
-                                    </span>
+                                    @if ($murid->status === 'aktif')
+                                        <span class="badge bg-success-subtle text-success">
+                                            Aktif
+                                        </span>
+                                    @else
+                                        <span class="badge bg-danger-subtle text-danger">
+                                            Nonaktif
+                                        </span>
+                                    @endif
                                 </td>
 
                                 <td class="text-end">
@@ -198,7 +230,10 @@
                                             <button
                                                 type="submit"
                                                 class="btn btn-sm action-btn {{ $murid->status === 'aktif' ? 'btn-outline-danger' : 'btn-outline-success' }}"
-                                                onclick="return confirm('Yakin ingin mengubah status murid ini?')"
+                                                data-confirm="true"
+                                                data-confirm-message="{{ $confirmMessage }}"
+                                                data-confirm-yes="{{ $murid->status === 'aktif' ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan' }}"
+                                                data-confirm-yes-class="{{ $murid->status === 'aktif' ? 'btn-danger' : 'btn-success' }}"
                                             >
                                                 @if ($murid->status === 'aktif')
                                                     <i class="bi bi-x-circle"></i>

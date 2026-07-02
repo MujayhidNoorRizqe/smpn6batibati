@@ -19,9 +19,15 @@
                         <small class="text-muted">Informasi lengkap orang tua atau wali murid</small>
                     </div>
 
-                    <span class="badge {{ $waliMurid->status === 'aktif' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
-                        {{ ucfirst($waliMurid->status) }}
-                    </span>
+                    @if ($waliMurid->status === 'aktif')
+                        <span class="badge bg-success-subtle text-success">
+                            Aktif
+                        </span>
+                    @else
+                        <span class="badge bg-danger-subtle text-danger">
+                            Nonaktif
+                        </span>
+                    @endif
                 </div>
 
                 <div class="card-body">
@@ -32,17 +38,17 @@
                     </div>
 
                     <div class="row mb-3">
-                        <div class="col-md-4 text-muted">NIK</div>
-                        <div class="col-md-8 fw-semibold">{{ $waliMurid->nik ?? '-' }}</div>
-                    </div>
-
-                    <div class="row mb-3">
                         <div class="col-md-4 text-muted">Hubungan</div>
                         <div class="col-md-8">
                             <span class="badge bg-primary-subtle text-primary">
                                 {{ ucfirst($waliMurid->hubungan) }}
                             </span>
                         </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4 text-muted">NIK</div>
+                        <div class="col-md-8 fw-semibold">{{ $waliMurid->nik ?? '-' }}</div>
                     </div>
 
                     <div class="row mb-3">
@@ -58,29 +64,25 @@
                     <div class="row mb-3">
                         <div class="col-md-4 text-muted">Nomor WhatsApp</div>
                         <div class="col-md-8 fw-semibold">
-                            @if ($waliMurid->no_whatsapp)
-                                <span class="badge bg-success-subtle text-success">
-                                    {{ $waliMurid->no_whatsapp }}
-                                </span>
-                            @else
-                                <span class="badge bg-secondary-subtle text-secondary">
-                                    Belum ada
-                                </span>
-                            @endif
+                            <span class="badge bg-success-subtle text-success">
+                                {{ $waliMurid->no_whatsapp }}
+                            </span>
                         </div>
                     </div>
 
                     <div class="row mb-4">
                         <div class="col-md-4 text-muted">Alamat</div>
-                        <div class="col-md-8 fw-semibold">{{ $waliMurid->alamat ?? '-' }}</div>
+                        <div class="col-md-8 fw-semibold">{{ $waliMurid->alamat }}</div>
                     </div>
 
                     <hr>
 
                     <div class="row mb-4">
-                        <div class="col-md-4 text-muted">Tanggal Dibuat</div>
+                        <div class="col-md-4 text-muted">Dibuat / Diperbarui</div>
                         <div class="col-md-8 fw-semibold">
                             {{ $waliMurid->created_at ? $waliMurid->created_at->format('d-m-Y H:i') : '-' }}
+                            /
+                            {{ $waliMurid->updated_at ? $waliMurid->updated_at->format('d-m-Y H:i') : '-' }}
                         </div>
                     </div>
 
@@ -90,6 +92,7 @@
                         </a>
 
                         <a href="{{ route($routePrefix . '.wali-murid.edit', $waliMurid) }}" class="btn btn-primary">
+                            <i class="bi bi-pencil-square me-1"></i>
                             Edit Wali Murid
                         </a>
                     </div>

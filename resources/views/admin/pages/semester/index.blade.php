@@ -1,5 +1,8 @@
 {{-- penjelasan: File ini adalah halaman daftar semester. --}}
 {{-- penjelasan: File ini dipanggil oleh SemesterController method index(). --}}
+{{-- penjelasan: Halaman ini bisa diakses oleh Super Admin dan Admin. --}}
+{{-- penjelasan: Alert berhasil, gagal, dan validasi sudah memakai komponen global admin.components.alert. --}}
+{{-- penjelasan: Tombol aktif/nonaktif memakai modal konfirmasi global melalui data-confirm="true". --}}
 
 @extends('admin.layouts.app')
 
@@ -27,25 +30,17 @@
         </div>
     </div>
 
-    @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            @foreach ($errors->all() as $error)
-                <div>{{ $error }}</div>
-            @endforeach
-        </div>
-    @endif
-
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <form action="{{ route($routePrefix . '.semester.index') }}" method="GET" class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">Tahun Ajaran</label>
+                    <label class="form-label">
+                        Tahun Ajaran
+                    </label>
+
                     <select name="tahun_ajaran_id" class="form-select">
                         <option value="">Semua Tahun Ajaran</option>
+
                         @foreach ($tahunAjarans as $tahunAjaran)
                             <option value="{{ $tahunAjaran->id }}" {{ request('tahun_ajaran_id') == $tahunAjaran->id ? 'selected' : '' }}>
                                 {{ $tahunAjaran->nama_tahun_ajaran }}
@@ -55,7 +50,10 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Semester</label>
+                    <label class="form-label">
+                        Semester
+                    </label>
+
                     <select name="nama_semester" class="form-select">
                         <option value="">Semua Semester</option>
                         <option value="ganjil" {{ request('nama_semester') === 'ganjil' ? 'selected' : '' }}>Ganjil</option>
@@ -64,7 +62,10 @@
                 </div>
 
                 <div class="col-md-3">
-                    <label class="form-label">Status</label>
+                    <label class="form-label">
+                        Status
+                    </label>
+
                     <select name="status" class="form-select">
                         <option value="">Semua Status</option>
                         <option value="aktif" {{ request('status') === 'aktif' ? 'selected' : '' }}>Aktif</option>
@@ -83,7 +84,7 @@
     </div>
 
     <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <div class="card-header bg-white border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
             <div>
                 <h6 class="fw-bold mb-0">Daftar Semester</h6>
                 <small class="text-muted">Data semester yang terdaftar</small>
@@ -109,11 +110,33 @@
 
                     <tbody>
                         @forelse ($semesters as $semester)
+                            @php
+                                // penjelasan: Pesan konfirmasi dibuat sesuai status semester.
+                                $confirmMessage = $semester->status === 'aktif'
+                                    ? 'Apakah Anda yakin ingin menonaktifkan semester ini? Jika dinonaktifkan, tidak ada semester aktif sampai Anda mengaktifkan yang lain.'
+                                    : 'Apakah Anda yakin ingin mengaktifkan semester ini? Semester aktif lainnya otomatis menjadi nonaktif.';
+
+                                // penjelasan: Semester tidak bisa diaktifkan jika tahun ajarannya belum aktif.
+                                $canActivateSemester = $semester->tahunAjaran && $semester->tahunAjaran->status === 'aktif';
+                            @endphp
+
                             <tr>
-                                <td class="fw-semibold">{{ $semester->nama_semester_label }}</td>
+                                <td class="fw-semibold">
+                                    {{ $semester->nama_semester_label }}
+                                </td>
 
                                 <td>
-                                    {{ $semester->tahunAjaran ? $semester->tahunAjaran->nama_tahun_ajaran : '-' }}
+                                    @if ($semester->tahunAjaran)
+                                        <div>{{ $semester->tahunAjaran->nama_tahun_ajaran }}</div>
+
+                                        @if ($semester->tahunAjaran->status === 'aktif')
+                                            <small class="text-success">Tahun ajaran aktif</small>
+                                        @else
+                                            <small class="text-muted">Tahun ajaran nonaktif</small>
+                                        @endif
+                                    @else
+                                        -
+                                    @endif
                                 </td>
 
                                 <td>
@@ -123,9 +146,15 @@
                                 </td>
 
                                 <td>
-                                    <span class="badge {{ $semester->status === 'aktif' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
-                                        {{ ucfirst($semester->status) }}
-                                    </span>
+                                    @if ($semester->status === 'aktif')
+                                        <span class="badge bg-success-subtle text-success">
+                                            Aktif
+                                        </span>
+                                    @else
+                                        <span class="badge bg-danger-subtle text-danger">
+                                            Nonaktif
+                                        </span>
+                                    @endif
                                 </td>
 
                                 <td class="text-end">
@@ -147,7 +176,11 @@
                                             <button
                                                 type="submit"
                                                 class="btn btn-sm action-btn {{ $semester->status === 'aktif' ? 'btn-outline-danger' : 'btn-outline-success' }}"
-                                                onclick="return confirm('Yakin ingin mengubah status semester ini?')"
+                                                {{ $semester->status !== 'aktif' && ! $canActivateSemester ? 'disabled' : '' }}
+                                                data-confirm="true"
+                                                data-confirm-message="{{ $confirmMessage }}"
+                                                data-confirm-yes="{{ $semester->status === 'aktif' ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan' }}"
+                                                data-confirm-yes-class="{{ $semester->status === 'aktif' ? 'btn-danger' : 'btn-success' }}"
                                             >
                                                 @if ($semester->status === 'aktif')
                                                     <i class="bi bi-x-circle"></i>
@@ -159,6 +192,12 @@
                                             </button>
                                         </form>
                                     </div>
+
+                                    @if ($semester->status !== 'aktif' && ! $canActivateSemester)
+                                        <small class="text-muted d-block mt-1">
+                                            Aktifkan tahun ajarannya terlebih dahulu.
+                                        </small>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

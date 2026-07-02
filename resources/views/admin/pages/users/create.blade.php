@@ -1,6 +1,9 @@
 {{-- penjelasan: File ini adalah halaman form tambah user. --}}
 {{-- penjelasan: File ini dipanggil oleh UserController method create(). --}}
 {{-- penjelasan: Form pada halaman ini dikirim ke UserController method store(). --}}
+{{-- penjelasan: Alert validasi tidak ditulis lokal karena sudah ditampilkan global dari admin.components.alert. --}}
+{{-- penjelasan: Semua field penting diberi tanda wajib (*) agar user tahu data yang harus diisi. --}}
+{{-- penjelasan: Tombol Batal dan Simpan User memakai modal konfirmasi global melalui data-confirm="true". --}}
 
 @extends('admin.layouts.app')
 
@@ -19,89 +22,147 @@
 
                 <div class="card-body">
 
-                    {{-- penjelasan: Error validasi akan tampil di bagian ini. --}}
-                    @if ($errors->any())
-                        <div class="alert alert-danger">
-                            @foreach ($errors->all() as $error)
-                                <div>{{ $error }}</div>
-                            @endforeach
-                        </div>
-                    @endif
+                    <div class="alert alert-info border-0 shadow-sm rounded-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Field bertanda <span class="text-danger">*</span> wajib diisi.
+                    </div>
 
-                    {{-- penjelasan: Form ini mengirim data user baru ke route super-admin.users.store. --}}
                     <form action="{{ route('super-admin.users.store') }}" method="POST">
                         @csrf
 
                         <div class="mb-3">
-                            <label class="form-label">Nama User</label>
+                            <label class="form-label">
+                                Nama User <span class="text-danger">*</span>
+                            </label>
+
                             <input
                                 type="text"
                                 name="name"
-                                class="form-control"
+                                class="form-control @error('name') is-invalid @enderror"
                                 value="{{ old('name') }}"
                                 placeholder="Masukkan nama user"
                                 required
                             >
+
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Email</label>
+                            <label class="form-label">
+                                Email <span class="text-danger">*</span>
+                            </label>
+
                             <input
                                 type="email"
                                 name="email"
-                                class="form-control"
+                                class="form-control @error('email') is-invalid @enderror"
                                 value="{{ old('email') }}"
                                 placeholder="Masukkan email login"
                                 required
                             >
+
+                            @error('email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Role</label>
-                            <select name="role" class="form-select" required>
+                            <label class="form-label">
+                                Role <span class="text-danger">*</span>
+                            </label>
+
+                            <select name="role" class="form-select @error('role') is-invalid @enderror" required>
                                 <option value="">Pilih Role</option>
                                 <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
                                 <option value="guru" {{ old('role') === 'guru' ? 'selected' : '' }}>Guru</option>
                                 <option value="staff" {{ old('role') === 'staff' ? 'selected' : '' }}>Staff</option>
                             </select>
+
+                            @error('role')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+
+                            <small class="text-muted">
+                                Akun super admin tidak dibuat dari form ini demi keamanan.
+                            </small>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Status</label>
-                            <select name="status" class="form-select" required>
-                                <option value="aktif" {{ old('status') === 'aktif' ? 'selected' : '' }}>Aktif</option>
+                            <label class="form-label">
+                                Status <span class="text-danger">*</span>
+                            </label>
+
+                            <select name="status" class="form-select @error('status') is-invalid @enderror" required>
+                                <option value="aktif" {{ old('status', 'aktif') === 'aktif' ? 'selected' : '' }}>Aktif</option>
                                 <option value="nonaktif" {{ old('status') === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
                             </select>
+
+                            @error('status')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Password</label>
+                            <label class="form-label">
+                                Password <span class="text-danger">*</span>
+                            </label>
+
                             <input
                                 type="password"
                                 name="password"
-                                class="form-control"
+                                class="form-control @error('password') is-invalid @enderror"
                                 placeholder="Minimal 8 karakter"
+                                minlength="8"
                                 required
                             >
+
+                            @error('password')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+
+                            <small class="text-muted">
+                                Password minimal 8 karakter.
+                            </small>
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label">Konfirmasi Password</label>
+                            <label class="form-label">
+                                Konfirmasi Password <span class="text-danger">*</span>
+                            </label>
+
                             <input
                                 type="password"
                                 name="password_confirmation"
                                 class="form-control"
                                 placeholder="Ulangi password"
+                                minlength="8"
                                 required
                             >
                         </div>
 
                         <div class="d-flex justify-content-end gap-2">
-                            <a href="{{ route('super-admin.users.index') }}" class="btn btn-outline-secondary">
+                            <a
+                                href="{{ route('super-admin.users.index') }}"
+                                class="btn btn-outline-secondary"
+                                data-confirm="true"
+                                data-confirm-message="Batalkan tambah user? Data yang belum disimpan akan hilang."
+                                data-confirm-yes="Ya, Batalkan"
+                                data-confirm-yes-class="btn-danger"
+                            >
                                 Batal
                             </a>
 
-                            <button type="submit" class="btn btn-primary">
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                                data-confirm="true"
+                                data-confirm-message="Apakah Anda yakin ingin menyimpan user baru ini?"
+                                data-confirm-yes="Ya, Simpan"
+                                data-confirm-yes-class="btn-primary"
+                            >
+                                <i class="bi bi-save me-1"></i>
                                 Simpan User
                             </button>
                         </div>
