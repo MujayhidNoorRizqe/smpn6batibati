@@ -3,7 +3,7 @@
 // penjelasan: File ini mengatur semua route atau URL aplikasi.
 // penjelasan: Route adalah jalur alamat yang dibuka user di browser.
 // penjelasan: Contoh route: /login, /super-admin/dashboard, /super-admin/pegawai, /guru/pengajuan-absensi-pegawai.
-// penjelasan: File ini mengatur route public, login, logout, dashboard, manajemen user, data master, akademik, jadwal pelajaran, absensi pegawai, pengajuan absensi pegawai, dan persetujuan absensi pegawai.
+// penjelasan: File ini mengatur route public, login, logout, dashboard, manajemen user, data master, akademik, jadwal pelajaran, absensi pegawai, absensi murid, pengajuan absensi pegawai, dan persetujuan absensi pegawai.
 
 use App\Http\Controllers\Admin\JadwalPelajaranController;
 // penjelasan: JadwalPelajaranController digunakan untuk modul Jadwal Pelajaran.
@@ -39,6 +39,10 @@ use App\Http\Controllers\Admin\WaliMuridController;
 
 use App\Http\Controllers\Auth\LoginController;
 // penjelasan: LoginController digunakan untuk fitur login dan logout.
+
+use App\Http\Controllers\Guru\AbsensiMuridController;
+// penjelasan: AbsensiMuridController digunakan oleh guru untuk input absensi murid sesuai jadwal mengajar.
+// penjelasan: Controller ini menangani daftar jadwal absen murid, form input absensi, simpan absensi, dan detail absensi murid.
 
 use App\Http\Controllers\Pegawai\AbsensiPegawaiController;
 // penjelasan: AbsensiPegawaiController digunakan oleh guru dan staff.
@@ -462,6 +466,23 @@ Route::middleware(['auth', 'role:guru'])
 
         Route::patch('/absensi-pegawai/pulang', [AbsensiPegawaiController::class, 'absenPulang'])
             ->name('absensi-pegawai.pulang');
+
+
+        // =================================================
+        // ABSENSI MURID
+        // =================================================
+
+        Route::get('/absensi-murid', [AbsensiMuridController::class, 'index'])
+            ->name('absensi-murid.index');
+
+        Route::get('/absensi-murid/jadwal/{jadwalPelajaran}', [AbsensiMuridController::class, 'create'])
+            ->name('absensi-murid.create');
+
+        Route::post('/absensi-murid/jadwal/{jadwalPelajaran}', [AbsensiMuridController::class, 'store'])
+            ->name('absensi-murid.store');
+
+        Route::get('/absensi-murid/jadwal/{jadwalPelajaran}/detail', [AbsensiMuridController::class, 'show'])
+            ->name('absensi-murid.show');
 
 
         // =================================================

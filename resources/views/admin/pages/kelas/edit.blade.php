@@ -5,6 +5,7 @@
 {{-- penjelasan: Data $gurus berisi pegawai guru aktif untuk pilihan wali kelas. --}}
 {{-- penjelasan: Alert validasi tidak ditulis lokal karena sudah ditampilkan global dari admin.components.alert. --}}
 {{-- penjelasan: Nama kelas, tingkat, wali kelas, dan status kelas wajib diisi. --}}
+{{-- penjelasan: Tombol Batal dan Simpan Perubahan memakai modal konfirmasi global melalui data-confirm="true". --}}
 
 @extends('admin.layouts.app')
 
@@ -127,7 +128,15 @@
                                 Batal
                             </a>
 
-                            <button type="submit" class="btn btn-primary" {{ $gurus->isEmpty() ? 'disabled' : '' }}>
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                                data-confirm="true"
+                                data-confirm-message="Apakah Anda yakin ingin menyimpan perubahan data kelas ini?"
+                                data-confirm-yes="Ya, Simpan Perubahan"
+                                data-confirm-yes-class="btn-primary"
+                                {{ $gurus->isEmpty() ? 'disabled' : '' }}
+                            >
                                 <i class="bi bi-save me-1"></i>
                                 Simpan Perubahan
                             </button>

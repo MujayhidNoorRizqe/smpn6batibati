@@ -8,6 +8,7 @@
 {{-- penjelasan: Menu yang belum dibuat routenya tetap memakai href="#" agar tidak menyebabkan error route not defined. --}}
 {{-- penjelasan: Menu Absen Saya untuk guru dan staff sudah aktif menuju modul absensi-pegawai. --}}
 {{-- penjelasan: Menu Absensi Pegawai untuk admin dan super admin sudah aktif menuju modul rekap absensi pegawai. --}}
+{{-- penjelasan: Menu Absen Murid untuk guru sudah aktif menuju modul absensi-murid. --}}
 
 @php
     // penjelasan: auth()->user() mengambil data user yang sedang login.
@@ -121,7 +122,7 @@
                 <span>Persetujuan Absensi</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Absensi Murid belum dibuat">
+            <a href="#" aria-disabled="true" title="Modul Rekap Absensi Murid akan dibuat pada tahap berikutnya">
                 <i class="bi bi-person-check"></i>
                 <span>Absensi Murid</span>
             </a>
@@ -228,7 +229,7 @@
                 <span>Persetujuan Absensi</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Absensi Murid belum dibuat">
+            <a href="#" aria-disabled="true" title="Modul Rekap Absensi Murid akan dibuat pada tahap berikutnya">
                 <i class="bi bi-person-check"></i>
                 <span>Absensi Murid</span>
             </a>
@@ -293,7 +294,7 @@
                 <span>Jadwal Mengajar</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Absen Murid belum dibuat">
+            <a href="{{ route('guru.absensi-murid.index') }}" class="{{ request()->routeIs('guru.absensi-murid.*') ? 'active' : '' }}">
                 <i class="bi bi-clipboard-check"></i>
                 <span>Absen Murid</span>
             </a>
