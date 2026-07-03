@@ -228,7 +228,14 @@
                                 Batal
                             </a>
 
-                            <button type="submit" class="btn btn-primary">
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                                data-confirm="true"
+                                data-confirm-message="Apakah Anda yakin ingin menyimpan perubahan data pegawai ini?"
+                                data-confirm-yes="Ya, Simpan Perubahan"
+                                data-confirm-yes-class="btn-primary"
+                            >
                                 <i class="bi bi-save me-1"></i>
                                 Simpan Perubahan
                             </button>

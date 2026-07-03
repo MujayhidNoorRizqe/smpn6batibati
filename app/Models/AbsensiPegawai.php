@@ -1,7 +1,8 @@
 <?php
 
-// penjelasan: Model ini digunakan untuk tabel absensi_pegawais.
-// penjelasan: Data di tabel ini adalah absensi resmi guru/staff.
+// penjelasan: Model ini mewakili tabel absensi_pegawais.
+// penjelasan: Tabel ini menyimpan absensi resmi guru/staff.
+// penjelasan: Data bisa berasal dari lokasi, WiFi, pengajuan, atau manual.
 
 namespace App\Models;
 
@@ -25,26 +26,22 @@ class AbsensiPegawai extends Model
         'pengajuan_absensi_pegawai_id',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'tanggal_absen' => 'date',
-        ];
-    }
+    protected $casts = [
+        'tanggal_absen' => 'date',
+        'latitude' => 'decimal:7',
+        'longitude' => 'decimal:7',
+    ];
 
-    // penjelasan: Relasi ke pegawai pemilik absensi.
     public function pegawai()
     {
         return $this->belongsTo(Pegawai::class);
     }
 
-    // penjelasan: Relasi ke pengajuan absensi pegawai jika absensi dibuat dari pengajuan.
     public function pengajuanAbsensiPegawai()
     {
         return $this->belongsTo(PengajuanAbsensiPegawai::class);
     }
 
-    // penjelasan: Label status absen untuk tampilan.
     public function getStatusAbsenLabelAttribute(): string
     {
         return match ($this->status_absen) {
@@ -56,5 +53,36 @@ class AbsensiPegawai extends Model
             'alpha' => 'Alpha',
             default => '-',
         };
+    }
+
+    public function getMetodeAbsenLabelAttribute(): string
+    {
+        return match ($this->metode_absen) {
+            'lokasi' => 'Lokasi GPS',
+            'wifi' => 'WiFi Sekolah',
+            'pengajuan' => 'Pengajuan',
+            'manual' => 'Manual',
+            default => '-',
+        };
+    }
+
+    public function getJamMasukFormatAttribute(): string
+    {
+        return $this->jam_masuk ? substr($this->jam_masuk, 0, 5) : '-';
+    }
+
+    public function getJamPulangFormatAttribute(): string
+    {
+        return $this->jam_pulang ? substr($this->jam_pulang, 0, 5) : '-';
+    }
+
+    public function isStatusPengajuan(): bool
+    {
+        return in_array($this->status_absen, ['dinas', 'sakit', 'izin'], true);
+    }
+
+    public function isHadirAtauTerlambat(): bool
+    {
+        return in_array($this->status_absen, ['hadir', 'terlambat'], true);
     }
 }

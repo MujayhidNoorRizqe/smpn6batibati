@@ -6,6 +6,7 @@
 {{-- penjelasan: File ini memakai route() Laravel untuk mengarahkan menu ke halaman masing-masing. --}}
 {{-- penjelasan: request()->routeIs() dipakai untuk memberi class active pada menu yang sedang dibuka. --}}
 {{-- penjelasan: Menu yang belum dibuat routenya tetap memakai href="#" agar tidak menyebabkan error route not defined. --}}
+{{-- penjelasan: Menu Absen Saya untuk guru dan staff sudah aktif menuju modul absensi-pegawai. --}}
 
 @php
     // penjelasan: auth()->user() mengambil data user yang sedang login.
@@ -109,7 +110,7 @@
 
             <div class="sidebar-section-title">Absensi & Nilai</div>
 
-            <a href="#" aria-disabled="true" title="Modul Absensi Pegawai akan dibuat pada tahap berikutnya">
+            <a href="#" aria-disabled="true" title="Modul Rekap Absensi Pegawai untuk admin/super admin akan dibuat pada tahap berikutnya">
                 <i class="bi bi-fingerprint"></i>
                 <span>Absensi Pegawai</span>
             </a>
@@ -216,7 +217,7 @@
 
             <div class="sidebar-section-title">Absensi & Nilai</div>
 
-            <a href="#" aria-disabled="true" title="Modul Absensi Pegawai akan dibuat pada tahap berikutnya">
+            <a href="#" aria-disabled="true" title="Modul Rekap Absensi Pegawai untuk admin akan dibuat pada tahap berikutnya">
                 <i class="bi bi-fingerprint"></i>
                 <span>Absensi Pegawai</span>
             </a>
@@ -269,7 +270,7 @@
 
             <div class="sidebar-section-title">Absensi</div>
 
-            <a href="#" aria-disabled="true" title="Modul Absen Saya akan dibuat pada tahap berikutnya">
+            <a href="{{ route('guru.absensi-pegawai.index') }}" class="{{ request()->routeIs('guru.absensi-pegawai.*') ? 'active' : '' }}">
                 <i class="bi bi-fingerprint"></i>
                 <span>Absen Saya</span>
             </a>
@@ -279,7 +280,7 @@
                 <span>Pengajuan Absensi</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Riwayat Absensi belum dibuat">
+            <a href="#" aria-disabled="true" title="Modul Riwayat Absensi terpisah belum dibuat karena riwayat sudah tampil di halaman Absen Saya">
                 <i class="bi bi-clock-history"></i>
                 <span>Riwayat Absensi</span>
             </a>
@@ -334,7 +335,7 @@
 
             <div class="sidebar-section-title">Absensi</div>
 
-            <a href="#" aria-disabled="true" title="Modul Absen Saya akan dibuat pada tahap berikutnya">
+            <a href="{{ route('staff.absensi-pegawai.index') }}" class="{{ request()->routeIs('staff.absensi-pegawai.*') ? 'active' : '' }}">
                 <i class="bi bi-fingerprint"></i>
                 <span>Absen Saya</span>
             </a>
@@ -344,7 +345,7 @@
                 <span>Pengajuan Absensi</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Riwayat Absensi belum dibuat">
+            <a href="#" aria-disabled="true" title="Modul Riwayat Absensi terpisah belum dibuat karena riwayat sudah tampil di halaman Absen Saya">
                 <i class="bi bi-clock-history"></i>
                 <span>Riwayat Absensi</span>
             </a>

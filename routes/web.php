@@ -3,7 +3,7 @@
 // penjelasan: File ini mengatur semua route atau URL aplikasi.
 // penjelasan: Route adalah jalur alamat yang dibuka user di browser.
 // penjelasan: Contoh route: /login, /super-admin/dashboard, /super-admin/pegawai, /guru/pengajuan-absensi-pegawai.
-// penjelasan: File ini mengatur route public, login, logout, dashboard, manajemen user, data master, akademik, jadwal pelajaran, pengajuan absensi pegawai, dan persetujuan absensi pegawai.
+// penjelasan: File ini mengatur route public, login, logout, dashboard, manajemen user, data master, akademik, jadwal pelajaran, absensi pegawai, pengajuan absensi pegawai, dan persetujuan absensi pegawai.
 
 use App\Http\Controllers\Admin\JadwalPelajaranController;
 // penjelasan: JadwalPelajaranController digunakan untuk modul Jadwal Pelajaran.
@@ -35,6 +35,10 @@ use App\Http\Controllers\Admin\WaliMuridController;
 
 use App\Http\Controllers\Auth\LoginController;
 // penjelasan: LoginController digunakan untuk fitur login dan logout.
+
+use App\Http\Controllers\Pegawai\AbsensiPegawaiController;
+// penjelasan: AbsensiPegawaiController digunakan oleh guru dan staff.
+// penjelasan: Controller ini menangani halaman Absen Saya, absen masuk, absen pulang, dan riwayat absensi pribadi.
 
 use App\Http\Controllers\Pegawai\PengajuanAbsensiPegawaiController;
 // penjelasan: PengajuanAbsensiPegawaiController digunakan oleh guru dan staff.
@@ -415,6 +419,20 @@ Route::middleware(['auth', 'role:guru'])
 
 
         // =================================================
+        // ABSENSI PEGAWAI / ABSEN SAYA
+        // =================================================
+
+        Route::get('/absensi-pegawai', [AbsensiPegawaiController::class, 'index'])
+            ->name('absensi-pegawai.index');
+
+        Route::post('/absensi-pegawai/masuk', [AbsensiPegawaiController::class, 'absenMasuk'])
+            ->name('absensi-pegawai.masuk');
+
+        Route::patch('/absensi-pegawai/pulang', [AbsensiPegawaiController::class, 'absenPulang'])
+            ->name('absensi-pegawai.pulang');
+
+
+        // =================================================
         // PENGAJUAN ABSENSI PEGAWAI
         // =================================================
 
@@ -427,11 +445,9 @@ Route::middleware(['auth', 'role:guru'])
         Route::post('/pengajuan-absensi-pegawai', [PengajuanAbsensiPegawaiController::class, 'store'])
             ->name('pengajuan-absensi-pegawai.store');
 
-        // penjelasan: Route edit harus tersedia karena pengajuan status menunggu boleh diperbaiki oleh guru.
         Route::get('/pengajuan-absensi-pegawai/{pengajuanAbsensiPegawai}/edit', [PengajuanAbsensiPegawaiController::class, 'edit'])
             ->name('pengajuan-absensi-pegawai.edit');
 
-        // penjelasan: Route update menyimpan perubahan pengajuan selama status masih menunggu.
         Route::put('/pengajuan-absensi-pegawai/{pengajuanAbsensiPegawai}', [PengajuanAbsensiPegawaiController::class, 'update'])
             ->name('pengajuan-absensi-pegawai.update');
 
@@ -462,6 +478,20 @@ Route::middleware(['auth', 'role:staff'])
 
 
         // =================================================
+        // ABSENSI PEGAWAI / ABSEN SAYA
+        // =================================================
+
+        Route::get('/absensi-pegawai', [AbsensiPegawaiController::class, 'index'])
+            ->name('absensi-pegawai.index');
+
+        Route::post('/absensi-pegawai/masuk', [AbsensiPegawaiController::class, 'absenMasuk'])
+            ->name('absensi-pegawai.masuk');
+
+        Route::patch('/absensi-pegawai/pulang', [AbsensiPegawaiController::class, 'absenPulang'])
+            ->name('absensi-pegawai.pulang');
+
+
+        // =================================================
         // PENGAJUAN ABSENSI PEGAWAI
         // =================================================
 
@@ -474,11 +504,9 @@ Route::middleware(['auth', 'role:staff'])
         Route::post('/pengajuan-absensi-pegawai', [PengajuanAbsensiPegawaiController::class, 'store'])
             ->name('pengajuan-absensi-pegawai.store');
 
-        // penjelasan: Route edit harus tersedia karena pengajuan status menunggu boleh diperbaiki oleh staff.
         Route::get('/pengajuan-absensi-pegawai/{pengajuanAbsensiPegawai}/edit', [PengajuanAbsensiPegawaiController::class, 'edit'])
             ->name('pengajuan-absensi-pegawai.edit');
 
-        // penjelasan: Route update menyimpan perubahan pengajuan selama status masih menunggu.
         Route::put('/pengajuan-absensi-pegawai/{pengajuanAbsensiPegawai}', [PengajuanAbsensiPegawaiController::class, 'update'])
             ->name('pengajuan-absensi-pegawai.update');
 
