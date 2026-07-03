@@ -7,6 +7,7 @@
 {{-- penjelasan: request()->routeIs() dipakai untuk memberi class active pada menu yang sedang dibuka. --}}
 {{-- penjelasan: Menu yang belum dibuat routenya tetap memakai href="#" agar tidak menyebabkan error route not defined. --}}
 {{-- penjelasan: Menu Absen Saya untuk guru dan staff sudah aktif menuju modul absensi-pegawai. --}}
+{{-- penjelasan: Menu Absensi Pegawai untuk admin dan super admin sudah aktif menuju modul rekap absensi pegawai. --}}
 
 @php
     // penjelasan: auth()->user() mengambil data user yang sedang login.
@@ -110,7 +111,7 @@
 
             <div class="sidebar-section-title">Absensi & Nilai</div>
 
-            <a href="#" aria-disabled="true" title="Modul Rekap Absensi Pegawai untuk admin/super admin akan dibuat pada tahap berikutnya">
+            <a href="{{ route('super-admin.absensi-pegawai.index') }}" class="{{ request()->routeIs('super-admin.absensi-pegawai.*') ? 'active' : '' }}">
                 <i class="bi bi-fingerprint"></i>
                 <span>Absensi Pegawai</span>
             </a>
@@ -217,7 +218,7 @@
 
             <div class="sidebar-section-title">Absensi & Nilai</div>
 
-            <a href="#" aria-disabled="true" title="Modul Rekap Absensi Pegawai untuk admin akan dibuat pada tahap berikutnya">
+            <a href="{{ route('admin.absensi-pegawai.index') }}" class="{{ request()->routeIs('admin.absensi-pegawai.*') ? 'active' : '' }}">
                 <i class="bi bi-fingerprint"></i>
                 <span>Absensi Pegawai</span>
             </a>

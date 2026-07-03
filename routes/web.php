@@ -24,6 +24,10 @@ use App\Http\Controllers\Admin\PersetujuanAbsensiPegawaiController;
 // penjelasan: PersetujuanAbsensiPegawaiController digunakan oleh admin dan super admin.
 // penjelasan: Controller ini menangani daftar pengajuan, detail pengajuan, ACC, dan tolak pengajuan absensi pegawai.
 
+use App\Http\Controllers\Admin\RekapAbsensiPegawaiController;
+// penjelasan: RekapAbsensiPegawaiController digunakan oleh admin dan super admin.
+// penjelasan: Controller ini menangani rekap absensi pegawai, detail absensi, filter, dan generate alpha.
+
 use App\Http\Controllers\Admin\SemesterController;
 // penjelasan: SemesterController digunakan untuk modul Semester.
 
@@ -243,6 +247,20 @@ Route::middleware(['auth', 'role:super_admin'])
 
 
         // =================================================
+        // REKAP ABSENSI PEGAWAI
+        // =================================================
+
+        Route::get('/absensi-pegawai', [RekapAbsensiPegawaiController::class, 'index'])
+            ->name('absensi-pegawai.index');
+
+        Route::post('/absensi-pegawai/generate-alpha', [RekapAbsensiPegawaiController::class, 'generateAlpha'])
+            ->name('absensi-pegawai.generate-alpha');
+
+        Route::get('/absensi-pegawai/{absensiPegawai}', [RekapAbsensiPegawaiController::class, 'show'])
+            ->name('absensi-pegawai.show');
+
+
+        // =================================================
         // PERSETUJUAN ABSENSI PEGAWAI
         // =================================================
 
@@ -380,6 +398,20 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/jadwal-pelajaran/{jadwalPelajaran}/edit', [JadwalPelajaranController::class, 'edit'])->name('jadwal-pelajaran.edit');
         Route::put('/jadwal-pelajaran/{jadwalPelajaran}', [JadwalPelajaranController::class, 'update'])->name('jadwal-pelajaran.update');
         Route::patch('/jadwal-pelajaran/{jadwalPelajaran}/toggle-status', [JadwalPelajaranController::class, 'toggleStatus'])->name('jadwal-pelajaran.toggle-status');
+
+
+        // =================================================
+        // REKAP ABSENSI PEGAWAI
+        // =================================================
+
+        Route::get('/absensi-pegawai', [RekapAbsensiPegawaiController::class, 'index'])
+            ->name('absensi-pegawai.index');
+
+        Route::post('/absensi-pegawai/generate-alpha', [RekapAbsensiPegawaiController::class, 'generateAlpha'])
+            ->name('absensi-pegawai.generate-alpha');
+
+        Route::get('/absensi-pegawai/{absensiPegawai}', [RekapAbsensiPegawaiController::class, 'show'])
+            ->name('absensi-pegawai.show');
 
 
         // =================================================
