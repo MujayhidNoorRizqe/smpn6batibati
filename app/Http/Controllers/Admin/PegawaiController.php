@@ -2,50 +2,32 @@
 
 // penjelasan: File ini adalah controller untuk modul Data Pegawai.
 // penjelasan: Controller ini dipakai oleh Super Admin dan Admin.
+// penjelasan: Sistem saat ini hanya memakai jenis pegawai Guru.
+// penjelasan: Jenis pegawai Staff sudah tidak ditampilkan dan tidak bisa ditambahkan dari sistem.
+// penjelasan: Jika akun login dipilih, nama pegawai otomatis mengikuti nama akun login tersebut.
 // penjelasan: Controller ini mengatur daftar pegawai, tambah pegawai, detail, edit, update, dan ubah status pegawai.
 // penjelasan: Controller ini juga mengatur upload foto pegawai ke storage Laravel.
-// penjelasan: Semua validasi memakai pesan Bahasa Indonesia agar selaras dengan UI global.
-// penjelasan: Pada proses tambah pegawai, jabatan dan alamat dibuat wajib sesuai kebutuhan sistem.
 
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-// penjelasan: Controller adalah class dasar bawaan Laravel.
-
 use App\Models\Pegawai;
-// penjelasan: Model Pegawai digunakan untuk mengambil dan menyimpan data pada tabel pegawais.
-
 use App\Models\User;
-// penjelasan: Model User digunakan untuk mengambil akun guru/staff yang bisa dihubungkan ke data pegawai.
-
 use Illuminate\Http\Request;
-// penjelasan: Request digunakan untuk mengambil data dari form tambah dan edit pegawai.
-
 use Illuminate\Support\Facades\Storage;
-// penjelasan: Storage digunakan untuk menyimpan dan menghapus file foto pegawai.
-
 use Illuminate\Validation\Rule;
-// penjelasan: Rule digunakan untuk validasi unique yang lebih fleksibel.
 
 class PegawaiController extends Controller
 {
-    /**
-     * penjelasan: Method routePrefix digunakan untuk menentukan prefix route berdasarkan role login.
-     * penjelasan: Jika login sebagai super_admin maka route-nya super-admin.
-     * penjelasan: Jika login sebagai admin maka route-nya admin.
-     */
     private function routePrefix(): string
     {
         return auth()->user()->role === 'super_admin' ? 'super-admin' : 'admin';
     }
 
-    /**
-     * penjelasan: Method index digunakan untuk menampilkan daftar pegawai.
-     * penjelasan: Method ini dipanggil oleh route GET /super-admin/pegawai atau /admin/pegawai.
-     */
     public function index(Request $request)
     {
-        $query = Pegawai::with('user');
+        $query = Pegawai::with('user')
+            ->where('jenis_pegawai', 'guru');
 
         if ($request->filled('search')) {
             $search = trim($request->search);
@@ -55,10 +37,6 @@ class PegawaiController extends Controller
                     ->orWhere('nip', 'like', '%' . $search . '%')
                     ->orWhere('jabatan', 'like', '%' . $search . '%');
             });
-        }
-
-        if ($request->filled('jenis_pegawai')) {
-            $query->where('jenis_pegawai', $request->jenis_pegawai);
         }
 
         if ($request->filled('status')) {
@@ -72,13 +50,9 @@ class PegawaiController extends Controller
         return view('admin.pages.pegawai.index', compact('pegawais', 'routePrefix'));
     }
 
-    /**
-     * penjelasan: Method create digunakan untuk menampilkan form tambah pegawai.
-     * penjelasan: Method ini dipanggil oleh route GET /super-admin/pegawai/create atau /admin/pegawai/create.
-     */
     public function create()
     {
-        $users = User::whereIn('role', ['guru', 'staff'])
+        $users = User::where('role', 'guru')
             ->whereDoesntHave('pegawai')
             ->where('status', 'aktif')
             ->orderBy('name')
@@ -89,17 +63,13 @@ class PegawaiController extends Controller
         return view('admin.pages.pegawai.create', compact('users', 'routePrefix'));
     }
 
-    /**
-     * penjelasan: Method store digunakan untuk menyimpan data pegawai baru.
-     * penjelasan: Method ini dipanggil oleh form tambah pegawai.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'user_id' => ['nullable', 'exists:users,id', 'unique:pegawais,user_id'],
             'nip' => ['nullable', 'string', 'max:50', 'unique:pegawais,nip'],
-            'nama_pegawai' => ['required', 'string', 'max:150'],
-            'jenis_pegawai' => ['required', Rule::in(['guru', 'staff'])],
+            'nama_pegawai' => ['required_without:user_id', 'nullable', 'string', 'max:150'],
+            'jenis_pegawai' => ['required', Rule::in(['guru'])],
             'jabatan' => ['required', 'string', 'max:150'],
             'jenis_kelamin' => ['nullable', Rule::in(['L', 'P'])],
             'no_hp' => ['nullable', 'string', 'max:30'],
@@ -108,16 +78,19 @@ class PegawaiController extends Controller
             'status' => ['required', Rule::in(['aktif', 'nonaktif'])],
         ], $this->validationMessages());
 
-        // penjelasan: Jika akun login dipilih, pastikan role akun sesuai dengan jenis pegawai.
-        // penjelasan: Contoh jenis pegawai guru harus memakai user role guru.
         if (! empty($validated['user_id'])) {
             $user = User::find($validated['user_id']);
 
-            if (! $user || $user->role !== $validated['jenis_pegawai']) {
+            if (! $user || $user->role !== 'guru' || $user->status !== 'aktif') {
                 return back()
-                    ->withErrors(['user_id' => 'Akun login harus sesuai dengan jenis pegawai yang dipilih.'])
+                    ->withErrors(['user_id' => 'Akun login yang dipilih harus akun guru aktif.'])
                     ->withInput();
             }
+
+            $validated['nama_pegawai'] = $user->name;
+            $validated['jenis_pegawai'] = 'guru';
+        } else {
+            $validated['jenis_pegawai'] = 'guru';
         }
 
         $validated = $this->normalizeNullableFields($validated);
@@ -130,15 +103,17 @@ class PegawaiController extends Controller
 
         return redirect()
             ->route($this->routePrefix() . '.pegawai.index')
-            ->with('success', 'Data pegawai berhasil ditambahkan.');
+            ->with('success', 'Data guru berhasil ditambahkan.');
     }
 
-    /**
-     * penjelasan: Method show digunakan untuk menampilkan detail pegawai.
-     * penjelasan: Parameter Pegawai $pegawai otomatis mengambil data berdasarkan id di URL.
-     */
     public function show(Pegawai $pegawai)
     {
+        if ($pegawai->jenis_pegawai !== 'guru') {
+            return redirect()
+                ->route($this->routePrefix() . '.pegawai.index')
+                ->with('error', 'Data staff sudah tidak ditampilkan pada sistem.');
+        }
+
         $pegawai->load('user');
 
         $routePrefix = $this->routePrefix();
@@ -146,12 +121,15 @@ class PegawaiController extends Controller
         return view('admin.pages.pegawai.show', compact('pegawai', 'routePrefix'));
     }
 
-    /**
-     * penjelasan: Method edit digunakan untuk menampilkan form edit pegawai.
-     */
     public function edit(Pegawai $pegawai)
     {
-        $users = User::whereIn('role', ['guru', 'staff'])
+        if ($pegawai->jenis_pegawai !== 'guru') {
+            return redirect()
+                ->route($this->routePrefix() . '.pegawai.index')
+                ->with('error', 'Data staff sudah tidak bisa diedit pada sistem.');
+        }
+
+        $users = User::where('role', 'guru')
             ->where('status', 'aktif')
             ->where(function ($query) use ($pegawai) {
                 $query->whereDoesntHave('pegawai')
@@ -165,13 +143,14 @@ class PegawaiController extends Controller
         return view('admin.pages.pegawai.edit', compact('pegawai', 'users', 'routePrefix'));
     }
 
-    /**
-     * penjelasan: Method update digunakan untuk menyimpan perubahan data pegawai.
-     * penjelasan: Untuk edit pegawai, jabatan dan alamat tetap mengikuti aturan sebelumnya.
-     * penjelasan: Jika ingin edit juga wajib jabatan/alamat, aturan nullable bisa diganti menjadi required.
-     */
     public function update(Request $request, Pegawai $pegawai)
     {
+        if ($pegawai->jenis_pegawai !== 'guru') {
+            return redirect()
+                ->route($this->routePrefix() . '.pegawai.index')
+                ->with('error', 'Data staff sudah tidak bisa diperbarui pada sistem.');
+        }
+
         $validated = $request->validate([
             'user_id' => [
                 'nullable',
@@ -184,8 +163,8 @@ class PegawaiController extends Controller
                 'max:50',
                 Rule::unique('pegawais', 'nip')->ignore($pegawai->id),
             ],
-            'nama_pegawai' => ['required', 'string', 'max:150'],
-            'jenis_pegawai' => ['required', Rule::in(['guru', 'staff'])],
+            'nama_pegawai' => ['required_without:user_id', 'nullable', 'string', 'max:150'],
+            'jenis_pegawai' => ['required', Rule::in(['guru'])],
             'jabatan' => ['nullable', 'string', 'max:150'],
             'jenis_kelamin' => ['nullable', Rule::in(['L', 'P'])],
             'no_hp' => ['nullable', 'string', 'max:30'],
@@ -197,11 +176,16 @@ class PegawaiController extends Controller
         if (! empty($validated['user_id'])) {
             $user = User::find($validated['user_id']);
 
-            if (! $user || $user->role !== $validated['jenis_pegawai']) {
+            if (! $user || $user->role !== 'guru' || $user->status !== 'aktif') {
                 return back()
-                    ->withErrors(['user_id' => 'Akun login harus sesuai dengan jenis pegawai yang dipilih.'])
+                    ->withErrors(['user_id' => 'Akun login yang dipilih harus akun guru aktif.'])
                     ->withInput();
             }
+
+            $validated['nama_pegawai'] = $user->name;
+            $validated['jenis_pegawai'] = 'guru';
+        } else {
+            $validated['jenis_pegawai'] = 'guru';
         }
 
         $validated = $this->normalizeNullableFields($validated);
@@ -218,15 +202,19 @@ class PegawaiController extends Controller
 
         return redirect()
             ->route($this->routePrefix() . '.pegawai.index')
-            ->with('success', 'Data pegawai berhasil diperbarui.');
+            ->with('success', 'Data guru berhasil diperbarui.');
     }
 
-    /**
-     * penjelasan: Method toggleStatus digunakan untuk mengubah status pegawai aktif/nonaktif.
-     * penjelasan: Data tidak dihapus permanen agar riwayat absensi dan jadwal tetap aman.
-     */
     public function toggleStatus(Pegawai $pegawai)
     {
+        if ($pegawai->jenis_pegawai !== 'guru') {
+            $pegawai->update([
+                'status' => 'nonaktif',
+            ]);
+
+            return back()->with('success', 'Data staff lama berhasil dinonaktifkan.');
+        }
+
         $newStatus = $pegawai->status === 'aktif' ? 'nonaktif' : 'aktif';
 
         $pegawai->update([
@@ -234,32 +222,28 @@ class PegawaiController extends Controller
         ]);
 
         $message = $newStatus === 'aktif'
-            ? 'Pegawai berhasil diaktifkan.'
-            : 'Pegawai berhasil dinonaktifkan.';
+            ? 'Guru berhasil diaktifkan.'
+            : 'Guru berhasil dinonaktifkan.';
 
         return back()->with('success', $message);
     }
 
-    /**
-     * penjelasan: Method validationMessages menyimpan semua pesan validasi Bahasa Indonesia.
-     * penjelasan: Pesan ini dipakai saat tambah dan edit pegawai.
-     */
     private function validationMessages(): array
     {
         return [
             'user_id.exists' => 'Akun login tidak valid.',
-            'user_id.unique' => 'Akun login sudah terhubung dengan data pegawai lain.',
+            'user_id.unique' => 'Akun login sudah terhubung dengan data guru lain.',
 
             'nip.string' => 'NIP harus berupa teks.',
             'nip.max' => 'NIP maksimal 50 karakter.',
             'nip.unique' => 'NIP sudah digunakan.',
 
-            'nama_pegawai.required' => 'Nama pegawai wajib diisi.',
-            'nama_pegawai.string' => 'Nama pegawai harus berupa teks.',
-            'nama_pegawai.max' => 'Nama pegawai maksimal 150 karakter.',
+            'nama_pegawai.required_without' => 'Nama guru wajib diisi jika belum memilih akun login.',
+            'nama_pegawai.string' => 'Nama guru harus berupa teks.',
+            'nama_pegawai.max' => 'Nama guru maksimal 150 karakter.',
 
             'jenis_pegawai.required' => 'Jenis pegawai wajib dipilih.',
-            'jenis_pegawai.in' => 'Jenis pegawai yang dipilih tidak valid.',
+            'jenis_pegawai.in' => 'Jenis pegawai yang tersedia hanya Guru.',
 
             'jabatan.required' => 'Jabatan wajib diisi.',
             'jabatan.string' => 'Jabatan harus berupa teks.',
@@ -282,10 +266,6 @@ class PegawaiController extends Controller
         ];
     }
 
-    /**
-     * penjelasan: Method normalizeNullableFields membersihkan input kosong menjadi null.
-     * penjelasan: Ini menjaga data database lebih rapi.
-     */
     private function normalizeNullableFields(array $validated): array
     {
         $nullableFields = [

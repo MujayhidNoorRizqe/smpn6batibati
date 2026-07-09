@@ -32,6 +32,14 @@ class MataPelajaran extends Model
         'status',
     ];
 
+    // penjelasan: Relasi ini menghubungkan mata pelajaran ke banyak nilai.
+    // penjelasan: Dipakai untuk input nilai, rekap nilai, format rapor, dan laporan nilai.
+    // penjelasan: Dipanggil misalnya $mataPelajaran->nilais.
+    public function nilais()
+    {
+        return $this->hasMany(Nilai::class, 'mata_pelajaran_id');
+    }
+
     // penjelasan: Fungsi ini mengecek apakah mata pelajaran masih aktif.
     // penjelasan: Fungsi ini nanti berguna saat memilih mata pelajaran pada form jadwal pelajaran dan nilai.
     public function isAktif(): bool

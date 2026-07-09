@@ -5,6 +5,7 @@
 // penjelasan: Absensi murid diinput oleh guru sesuai jadwal mengajar hari ini.
 // penjelasan: Tanggal absensi dibuat otomatis dari sistem, bukan dipilih manual oleh guru.
 // penjelasan: Nama index dibuat pendek agar aman dari batas panjang identifier MySQL.
+// penjelasan: Status absensi murid terdiri dari hadir, izin, sakit, alpha, dan terlambat.
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -50,7 +51,8 @@ return new class extends Migration
             $table->date('tanggal_absen');
 
             // penjelasan: Status absensi murid yang dipakai pada sistem.
-            $table->enum('status_absen', ['hadir', 'izin', 'sakit', 'alpha']);
+            // penjelasan: Terlambat ditambahkan agar sesuai kebutuhan final absensi murid.
+            $table->enum('status_absen', ['hadir', 'izin', 'sakit', 'alpha', 'terlambat']);
 
             // penjelasan: Keterangan opsional, misalnya alasan izin/sakit jika diketahui guru.
             $table->string('keterangan')->nullable();

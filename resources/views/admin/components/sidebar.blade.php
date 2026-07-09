@@ -1,27 +1,14 @@
 {{-- penjelasan: File ini adalah component sidebar dashboard. --}}
 {{-- penjelasan: Sidebar ini dipanggil oleh layout utama admin.layouts.app. --}}
 {{-- penjelasan: Sidebar menampilkan menu berbeda sesuai role user yang sedang login. --}}
-{{-- penjelasan: Sidebar dibuat fixed lewat admin.css, sehingga tidak ikut bergerak saat halaman utama discroll. --}}
-{{-- penjelasan: Jika menu sidebar panjang, sidebar bisa discroll sendiri karena memakai overflow-y: auto di admin.css. --}}
-{{-- penjelasan: File ini memakai route() Laravel untuk mengarahkan menu ke halaman masing-masing. --}}
-{{-- penjelasan: request()->routeIs() dipakai untuk memberi class active pada menu yang sedang dibuka. --}}
-{{-- penjelasan: Menu yang belum dibuat routenya tetap memakai href="#" agar tidak menyebabkan error route not defined. --}}
-{{-- penjelasan: Menu Absen Saya untuk guru dan staff sudah aktif menuju modul absensi-pegawai. --}}
-{{-- penjelasan: Menu Absensi Pegawai untuk admin dan super admin sudah aktif menuju modul rekap absensi pegawai. --}}
-{{-- penjelasan: Menu Absen Murid untuk guru sudah aktif menuju modul absensi-murid. --}}
+{{-- penjelasan: Role aktif pada sistem adalah super_admin, admin, dan guru. --}}
+{{-- penjelasan: Role staff sudah tidak digunakan dan menu staff dihapus. --}}
+{{-- penjelasan: Menu Profil Saya pada role guru sudah dihapus. --}}
+{{-- penjelasan: Menu Ganti Password pada role guru sudah diaktifkan dan diarahkan ke halaman ganti password. --}}
 
 @php
-    // penjelasan: auth()->user() mengambil data user yang sedang login.
-    // penjelasan: Data ini berasal dari tabel users.
-    // penjelasan: Data user dipakai untuk menampilkan nama, role, dan menentukan menu sidebar.
     $user = auth()->user();
-
-    // penjelasan: Role user digunakan untuk menentukan menu yang tampil.
-    // penjelasan: Role yang digunakan pada sistem ini adalah super_admin, admin, guru, dan staff.
     $role = $user->role ?? null;
-
-    // penjelasan: roleLabel dipakai untuk menampilkan role dengan format lebih rapi.
-    // penjelasan: Contoh super_admin menjadi Super Admin.
     $roleLabel = $role ? ucwords(str_replace('_', ' ', $role)) : '-';
 @endphp
 
@@ -122,46 +109,26 @@
                 <span>Persetujuan Absensi</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Rekap Absensi Murid akan dibuat pada tahap berikutnya">
+            <a href="{{ route('super-admin.rekap-absensi-murid.index') }}" class="{{ request()->routeIs('super-admin.rekap-absensi-murid.*') ? 'active' : '' }}">
                 <i class="bi bi-person-check"></i>
-                <span>Absensi Murid</span>
+                <span>Rekap Absensi Murid</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Nilai belum dibuat">
+            <a href="{{ route('super-admin.nilai.index') }}" class="{{ request()->routeIs('super-admin.nilai.*') ? 'active' : '' }}">
                 <i class="bi bi-journal-text"></i>
                 <span>Nilai</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Laporan belum dibuat">
+            <a href="{{ route('super-admin.laporan.index') }}" class="{{ request()->routeIs('super-admin.laporan.*') ? 'active' : '' }}">
                 <i class="bi bi-file-earmark-bar-graph"></i>
                 <span>Laporan</span>
             </a>
 
             <div class="sidebar-section-title">Website & Sistem</div>
 
-            <a href="#" aria-disabled="true" title="Modul WhatsApp Fonnte belum dibuat">
+            <a href="{{ route('super-admin.whatsapp-fonnte.index') }}" class="{{ request()->routeIs('super-admin.whatsapp-fonnte.*') ? 'active' : '' }}">
                 <i class="bi bi-whatsapp"></i>
                 <span>WhatsApp Fonnte</span>
-            </a>
-
-            <a href="#" aria-disabled="true" title="Modul Berita/Kegiatan belum dibuat">
-                <i class="bi bi-newspaper"></i>
-                <span>Berita / Kegiatan</span>
-            </a>
-
-            <a href="#" aria-disabled="true" title="Modul Galeri belum dibuat">
-                <i class="bi bi-images"></i>
-                <span>Galeri</span>
-            </a>
-
-            <a href="#" aria-disabled="true" title="Modul Pengaturan belum dibuat">
-                <i class="bi bi-gear"></i>
-                <span>Pengaturan</span>
-            </a>
-
-            <a href="#" aria-disabled="true" title="Modul Log Aktivitas belum dibuat">
-                <i class="bi bi-clock-history"></i>
-                <span>Log Aktivitas</span>
             </a>
         @endif
 
@@ -229,36 +196,26 @@
                 <span>Persetujuan Absensi</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Rekap Absensi Murid akan dibuat pada tahap berikutnya">
+            <a href="{{ route('admin.rekap-absensi-murid.index') }}" class="{{ request()->routeIs('admin.rekap-absensi-murid.*') ? 'active' : '' }}">
                 <i class="bi bi-person-check"></i>
-                <span>Absensi Murid</span>
+                <span>Rekap Absensi Murid</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Nilai belum dibuat">
+            <a href="{{ route('admin.nilai.index') }}" class="{{ request()->routeIs('admin.nilai.*') ? 'active' : '' }}">
                 <i class="bi bi-journal-text"></i>
                 <span>Nilai</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Laporan belum dibuat">
+            <a href="{{ route('admin.laporan.index') }}" class="{{ request()->routeIs('admin.laporan.*') ? 'active' : '' }}">
                 <i class="bi bi-file-earmark-bar-graph"></i>
                 <span>Laporan</span>
             </a>
 
-            <div class="sidebar-section-title">Website</div>
+            <div class="sidebar-section-title">Website & Sistem</div>
 
-            <a href="#" aria-disabled="true" title="Modul WhatsApp Fonnte belum dibuat">
+            <a href="{{ route('admin.whatsapp-fonnte.index') }}" class="{{ request()->routeIs('admin.whatsapp-fonnte.*') ? 'active' : '' }}">
                 <i class="bi bi-whatsapp"></i>
                 <span>WhatsApp Fonnte</span>
-            </a>
-
-            <a href="#" aria-disabled="true" title="Modul Berita/Kegiatan belum dibuat">
-                <i class="bi bi-newspaper"></i>
-                <span>Berita / Kegiatan</span>
-            </a>
-
-            <a href="#" aria-disabled="true" title="Modul Galeri belum dibuat">
-                <i class="bi bi-images"></i>
-                <span>Galeri</span>
             </a>
         @endif
 
@@ -289,7 +246,7 @@
 
             <div class="sidebar-section-title">Akademik</div>
 
-            <a href="#" aria-disabled="true" title="Modul Jadwal Mengajar Guru belum dibuat">
+            <a href="{{ route('guru.jadwal-mengajar.index') }}" class="{{ request()->routeIs('guru.jadwal-mengajar.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar-check"></i>
                 <span>Jadwal Mengajar</span>
             </a>
@@ -299,67 +256,24 @@
                 <span>Absen Murid</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Rekap Absen Murid belum dibuat">
+            <a href="{{ route('guru.rekap-absen-murid.index') }}" class="{{ request()->routeIs('guru.rekap-absen-murid.*') ? 'active' : '' }}">
                 <i class="bi bi-card-checklist"></i>
                 <span>Rekap Absen Murid</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Input Nilai belum dibuat">
+            <a href="{{ route('guru.input-nilai.index') }}" class="{{ request()->routeIs('guru.input-nilai.*') ? 'active' : '' }}">
                 <i class="bi bi-journal-plus"></i>
                 <span>Input Nilai</span>
             </a>
 
-            <a href="#" aria-disabled="true" title="Modul Rekap Nilai belum dibuat">
+            <a href="{{ route('guru.rekap-nilai.index') }}" class="{{ request()->routeIs('guru.rekap-nilai.*') ? 'active' : '' }}">
                 <i class="bi bi-journal-text"></i>
                 <span>Rekap Nilai</span>
             </a>
 
             <div class="sidebar-section-title">Akun</div>
 
-            <a href="#" aria-disabled="true" title="Modul Profil Saya belum dibuat">
-                <i class="bi bi-person-circle"></i>
-                <span>Profil Saya</span>
-            </a>
-
-            <a href="#" aria-disabled="true" title="Modul Ganti Password belum dibuat">
-                <i class="bi bi-key"></i>
-                <span>Ganti Password</span>
-            </a>
-        @endif
-
-        @if ($role === 'staff')
-            <div class="sidebar-section-title">Utama</div>
-
-            <a href="{{ route('staff.dashboard') }}" class="{{ request()->routeIs('staff.dashboard') ? 'active' : '' }}">
-                <i class="bi bi-speedometer2"></i>
-                <span>Dashboard</span>
-            </a>
-
-            <div class="sidebar-section-title">Absensi</div>
-
-            <a href="{{ route('staff.absensi-pegawai.index') }}" class="{{ request()->routeIs('staff.absensi-pegawai.*') ? 'active' : '' }}">
-                <i class="bi bi-fingerprint"></i>
-                <span>Absen Saya</span>
-            </a>
-
-            <a href="{{ route('staff.pengajuan-absensi-pegawai.index') }}" class="{{ request()->routeIs('staff.pengajuan-absensi-pegawai.*') ? 'active' : '' }}">
-                <i class="bi bi-send-check"></i>
-                <span>Pengajuan Absensi</span>
-            </a>
-
-            <a href="#" aria-disabled="true" title="Modul Riwayat Absensi terpisah belum dibuat karena riwayat sudah tampil di halaman Absen Saya">
-                <i class="bi bi-clock-history"></i>
-                <span>Riwayat Absensi</span>
-            </a>
-
-            <div class="sidebar-section-title">Akun</div>
-
-            <a href="#" aria-disabled="true" title="Modul Profil Saya belum dibuat">
-                <i class="bi bi-person-circle"></i>
-                <span>Profil Saya</span>
-            </a>
-
-            <a href="#" aria-disabled="true" title="Modul Ganti Password belum dibuat">
+            <a href="{{ route('guru.password.edit') }}" class="{{ request()->routeIs('guru.password.*') ? 'active' : '' }}">
                 <i class="bi bi-key"></i>
                 <span>Ganti Password</span>
             </a>

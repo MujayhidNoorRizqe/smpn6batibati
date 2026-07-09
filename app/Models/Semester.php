@@ -45,7 +45,15 @@ class Semester extends Model
     // penjelasan: Dipanggil misalnya $semester->tahunAjaran.
     public function tahunAjaran()
     {
-        return $this->belongsTo(TahunAjaran::class);
+        return $this->belongsTo(TahunAjaran::class, 'tahun_ajaran_id');
+    }
+
+    // penjelasan: Relasi ini menghubungkan semester ke banyak nilai.
+    // penjelasan: Dipakai untuk rekap nilai ganjil/genap dan format rapor.
+    // penjelasan: Dipanggil misalnya $semester->nilais.
+    public function nilais()
+    {
+        return $this->hasMany(Nilai::class, 'semester_id');
     }
 
     // penjelasan: Fungsi ini mengecek apakah semester berstatus aktif.
@@ -61,7 +69,7 @@ class Semester extends Model
         return match ($this->nama_semester) {
             'ganjil' => 'Ganjil',
             'genap' => 'Genap',
-            default => '-',
+            default => ucwords(str_replace('_', ' ', (string) $this->nama_semester)),
         };
     }
 }

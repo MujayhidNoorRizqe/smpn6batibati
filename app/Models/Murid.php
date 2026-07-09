@@ -64,6 +64,14 @@ class Murid extends Model
         return $this->belongsTo(WaliMurid::class, 'wali_murid_id');
     }
 
+    // penjelasan: Relasi ini menghubungkan murid ke banyak data nilai.
+    // penjelasan: Dipakai pada modul input nilai, rekap nilai, format rapor, dan laporan nilai.
+    // penjelasan: Dipanggil misalnya $murid->nilais.
+    public function nilais()
+    {
+        return $this->hasMany(Nilai::class, 'murid_id');
+    }
+
     // penjelasan: Fungsi ini mengecek apakah murid masih aktif.
     // penjelasan: Fungsi ini nanti berguna untuk absensi, nilai, dan laporan.
     public function isAktif(): bool

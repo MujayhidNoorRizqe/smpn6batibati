@@ -1,9 +1,7 @@
 {{-- penjelasan: File ini adalah halaman edit pegawai. --}}
-{{-- penjelasan: File ini dipanggil oleh PegawaiController method edit(). --}}
-{{-- penjelasan: Form ini dikirim ke PegawaiController method update(). --}}
-{{-- penjelasan: Form memakai multipart/form-data karena bisa mengganti foto pegawai. --}}
-{{-- penjelasan: Alert validasi tidak ditulis lokal karena sudah ditampilkan global dari admin.components.alert. --}}
-{{-- penjelasan: Semua field wajib diberi tanda (*) dan field opsional diberi label (Opsional). --}}
+{{-- penjelasan: Form ini hanya digunakan untuk mengedit data guru. --}}
+{{-- penjelasan: Jika akun login dipilih, nama pegawai otomatis mengikuti nama akun login. --}}
+{{-- penjelasan: Jika akun login belum dipilih, nama pegawai bisa diisi manual. --}}
 
 @extends('admin.layouts.app')
 
@@ -17,7 +15,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0">
                     <h5 class="fw-bold mb-0">Edit Pegawai</h5>
-                    <small class="text-muted">Ubah data guru atau staff.</small>
+                    <small class="text-muted">Ubah data guru.</small>
                 </div>
 
                 <div class="card-body">
@@ -31,17 +29,29 @@
                         @csrf
                         @method('PUT')
 
+                        <input type="hidden" name="jenis_pegawai" value="guru">
+
                         <div class="mb-3">
                             <label class="form-label">
                                 Akun Login <span class="text-muted">(Opsional)</span>
                             </label>
 
-                            <select name="user_id" class="form-select @error('user_id') is-invalid @enderror">
-                                <option value="">Belum dihubungkan</option>
+                            <select
+                                name="user_id"
+                                id="user_id"
+                                class="form-select @error('user_id') is-invalid @enderror"
+                            >
+                                <option value="" data-name="">
+                                    Belum dihubungkan
+                                </option>
 
                                 @foreach ($users as $user)
-                                    <option value="{{ $user->id }}" {{ old('user_id', $pegawai->user_id) == $user->id ? 'selected' : '' }}>
-                                        {{ $user->name }} - {{ $user->email }} - {{ ucwords($user->role) }}
+                                    <option
+                                        value="{{ $user->id }}"
+                                        data-name="{{ $user->name }}"
+                                        {{ old('user_id', $pegawai->user_id) == $user->id ? 'selected' : '' }}
+                                    >
+                                        {{ $user->name }} - {{ $user->email }} - Guru
                                     </option>
                                 @endforeach
                             </select>
@@ -51,7 +61,7 @@
                             @enderror
 
                             <small class="text-muted">
-                                Akun login hanya menampilkan user guru/staff yang belum dipakai pegawai lain atau akun yang sedang terhubung.
+                                Akun login hanya menampilkan akun guru yang belum dipakai pegawai lain atau akun yang sedang terhubung.
                             </small>
                         </div>
 
@@ -81,14 +91,18 @@
                             <input
                                 type="text"
                                 name="nama_pegawai"
+                                id="nama_pegawai"
                                 class="form-control @error('nama_pegawai') is-invalid @enderror"
                                 value="{{ old('nama_pegawai', $pegawai->nama_pegawai) }}"
-                                required
                             >
 
                             @error('nama_pegawai')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+
+                            <small class="text-muted" id="namaPegawaiHelp">
+                                Jika akun login dipilih, nama pegawai otomatis mengikuti nama akun tersebut.
+                            </small>
                         </div>
 
                         <div class="mb-3">
@@ -96,13 +110,14 @@
                                 Jenis Pegawai <span class="text-danger">*</span>
                             </label>
 
-                            <select name="jenis_pegawai" class="form-select @error('jenis_pegawai') is-invalid @enderror" required>
-                                <option value="guru" {{ old('jenis_pegawai', $pegawai->jenis_pegawai) === 'guru' ? 'selected' : '' }}>Guru</option>
-                                <option value="staff" {{ old('jenis_pegawai', $pegawai->jenis_pegawai) === 'staff' ? 'selected' : '' }}>Staff</option>
-                            </select>
+                            <input type="text" class="form-control" value="Guru" disabled>
+
+                            <small class="text-muted">
+                                Jenis pegawai saat ini hanya Guru.
+                            </small>
 
                             @error('jenis_pegawai')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror
                         </div>
 
@@ -116,7 +131,7 @@
                                 name="jabatan"
                                 class="form-control @error('jabatan') is-invalid @enderror"
                                 value="{{ old('jabatan', $pegawai->jabatan) }}"
-                                placeholder="Contoh: Guru Matematika, Staff TU"
+                                placeholder="Contoh: Guru Matematika"
                             >
 
                             @error('jabatan')
@@ -232,7 +247,7 @@
                                 type="submit"
                                 class="btn btn-primary"
                                 data-confirm="true"
-                                data-confirm-message="Apakah Anda yakin ingin menyimpan perubahan data pegawai ini?"
+                                data-confirm-message="Apakah Anda yakin ingin menyimpan perubahan data guru ini?"
                                 data-confirm-yes="Ya, Simpan Perubahan"
                                 data-confirm-yes-class="btn-primary"
                             >
@@ -247,5 +262,42 @@
 
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const userSelect = document.getElementById('user_id');
+            const namaInput = document.getElementById('nama_pegawai');
+            const helpText = document.getElementById('namaPegawaiHelp');
+
+            function syncNamaPegawaiFromUser() {
+                if (! userSelect || ! namaInput) {
+                    return;
+                }
+
+                const selectedOption = userSelect.options[userSelect.selectedIndex];
+                const selectedName = selectedOption ? selectedOption.getAttribute('data-name') : '';
+
+                if (selectedName) {
+                    namaInput.value = selectedName;
+                    namaInput.readOnly = true;
+
+                    if (helpText) {
+                        helpText.textContent = 'Nama pegawai otomatis mengikuti akun login yang dipilih.';
+                    }
+                } else {
+                    namaInput.readOnly = false;
+
+                    if (helpText) {
+                        helpText.textContent = 'Jika akun login belum dipilih, nama pegawai dapat diisi manual.';
+                    }
+                }
+            }
+
+            if (userSelect) {
+                userSelect.addEventListener('change', syncNamaPegawaiFromUser);
+                syncNamaPegawaiFromUser();
+            }
+        });
+    </script>
 
 @endsection

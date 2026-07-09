@@ -3,9 +3,12 @@
 {{-- penjelasan: Halaman ini bisa diakses oleh Super Admin dan Admin. --}}
 {{-- penjelasan: Data $murids dikirim dari controller dan berisi daftar murid dengan relasi kelas dan wali murid. --}}
 {{-- penjelasan: Data $kelasList dikirim untuk pilihan filter kelas. --}}
+{{-- penjelasan: Data $hasFilter dikirim untuk mengecek apakah user sudah melakukan filter atau belum. --}}
 {{-- penjelasan: routePrefix dipakai agar link otomatis menyesuaikan role login, yaitu super-admin atau admin. --}}
 {{-- penjelasan: Alert berhasil, gagal, dan validasi sudah memakai komponen global admin.components.alert. --}}
 {{-- penjelasan: Tombol aktif/nonaktif memakai modal konfirmasi global melalui data-confirm="true". --}}
+{{-- penjelasan: Sebelum filter dilakukan, daftar murid tidak ditampilkan. --}}
+{{-- penjelasan: Setelah filter dilakukan, daftar murid tampil urut abjad seperti daftar absen. --}}
 
 @extends('admin.layouts.app')
 
@@ -106,162 +109,219 @@
         <div class="card-header bg-white border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
             <div>
                 <h6 class="fw-bold mb-0">Daftar Murid</h6>
-                <small class="text-muted">Data siswa yang terdaftar pada sistem</small>
+
+                @if ($hasFilter)
+                    <small class="text-muted">
+                        Data siswa yang sesuai dengan filter. Urutan nama mengikuti alfabet seperti daftar absen.
+                    </small>
+                @else
+                    <small class="text-muted">
+                        Gunakan filter terlebih dahulu untuk menampilkan daftar murid.
+                    </small>
+                @endif
             </div>
 
-            <span class="badge bg-primary-subtle text-primary">
-                {{ $murids->count() }} data tampil
-            </span>
+            @if ($hasFilter)
+                <span class="badge bg-primary-subtle text-primary">
+                    {{ $murids->total() }} data ditemukan
+                </span>
+            @else
+                <span class="badge bg-secondary-subtle text-secondary">
+                    Belum difilter
+                </span>
+            @endif
         </div>
 
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle admin-table">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Nama Murid</th>
-                            <th>NIS / NISN</th>
-                            <th>Kelas</th>
-                            <th>Wali Murid</th>
-                            <th>JK</th>
-                            <th>Status</th>
-                            <th class="text-end table-action-column">Aksi</th>
-                        </tr>
-                    </thead>
+            @if (! $hasFilter)
+                <div class="empty-state-filter text-center">
+                    <div class="empty-icon">
+                        <i class="bi bi-search"></i>
+                    </div>
 
-                    <tbody>
-                        @forelse ($murids as $murid)
-                            @php
-                                // penjelasan: Pesan konfirmasi dibuat sesuai status murid.
-                                $confirmMessage = $murid->status === 'aktif'
-                                    ? 'Apakah Anda yakin ingin menonaktifkan murid ini? Data tidak dihapus, hanya statusnya menjadi nonaktif.'
-                                    : 'Apakah Anda yakin ingin mengaktifkan murid ini kembali?';
-                            @endphp
+                    <h5 class="fw-bold mb-2">Silakan gunakan filter terlebih dahulu</h5>
 
+                    <p class="text-muted mb-0">
+                        Daftar murid tidak ditampilkan otomatis agar halaman lebih rapi.
+                        Pilih kelas, status, jenis kelamin, atau masukkan kata kunci pencarian untuk menampilkan data murid.
+                    </p>
+                </div>
+            @else
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle admin-table">
+                        <thead class="table-light">
                             <tr>
-                                <td>
-                                    <div class="d-flex align-items-center gap-2">
-                                        @if ($murid->foto)
-                                            <img src="{{ asset('storage/' . $murid->foto) }}" alt="Foto Murid" width="38" height="38" class="rounded-circle" style="object-fit: cover;">
-                                        @else
-                                            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width:38px; height:38px;">
-                                                {{ strtoupper(substr($murid->nama_murid, 0, 1)) }}
-                                            </div>
-                                        @endif
+                                <th style="width: 70px;">No</th>
+                                <th>Nama Murid</th>
+                                <th>NIS / NISN</th>
+                                <th>Kelas</th>
+                                <th>Wali Murid</th>
+                                <th>JK</th>
+                                <th>Status</th>
+                                <th class="text-end table-action-column">Aksi</th>
+                            </tr>
+                        </thead>
 
-                                        <div>
-                                            <div class="fw-semibold">{{ $murid->nama_murid }}</div>
+                        <tbody>
+                            @forelse ($murids as $murid)
+                                @php
+                                    // penjelasan: Pesan konfirmasi dibuat sesuai status murid.
+                                    $confirmMessage = $murid->status === 'aktif'
+                                        ? 'Apakah Anda yakin ingin menonaktifkan murid ini? Data tidak dihapus, hanya statusnya menjadi nonaktif.'
+                                        : 'Apakah Anda yakin ingin mengaktifkan murid ini kembali?';
+                                @endphp
+
+                                <tr>
+                                    <td>
+                                        {{ $murids->firstItem() + $loop->index }}
+                                    </td>
+
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if ($murid->foto)
+                                                <img src="{{ asset('storage/' . $murid->foto) }}" alt="Foto Murid" width="38" height="38" class="rounded-circle" style="object-fit: cover;">
+                                            @else
+                                                <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width:38px; height:38px;">
+                                                    {{ strtoupper(substr($murid->nama_murid, 0, 1)) }}
+                                                </div>
+                                            @endif
+
+                                            <div>
+                                                <div class="fw-semibold">{{ $murid->nama_murid }}</div>
+
+                                                <small class="text-muted">
+                                                    @if ($murid->tanggal_lahir)
+                                                        Lahir: {{ $murid->tanggal_lahir->format('d-m-Y') }}
+                                                    @else
+                                                        Tanggal lahir belum diisi
+                                                    @endif
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <div>NIS: {{ $murid->nis ?? '-' }}</div>
+                                        <small class="text-muted">NISN: {{ $murid->nisn ?? '-' }}</small>
+                                    </td>
+
+                                    <td>
+                                        @if ($murid->kelas)
+                                            <span class="badge bg-primary-subtle text-primary">
+                                                {{ $murid->kelas->nama_kelas }}
+                                            </span>
+                                        @else
+                                            <span class="badge bg-warning-subtle text-warning">
+                                                Belum ada kelas
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        @if ($murid->waliMurid)
+                                            <div>{{ $murid->waliMurid->nama_wali }}</div>
 
                                             <small class="text-muted">
-                                                @if ($murid->tanggal_lahir)
-                                                    Lahir: {{ $murid->tanggal_lahir->format('d-m-Y') }}
-                                                @else
-                                                    Tanggal lahir belum diisi
-                                                @endif
+                                                {{ ucfirst($murid->waliMurid->hubungan) }} |
+                                                {{ $murid->waliMurid->no_whatsapp }}
                                             </small>
+                                        @else
+                                            <span class="badge bg-warning-subtle text-warning">
+                                                Belum terhubung
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        {{ $murid->jenis_kelamin === 'L' ? 'L' : 'P' }}
+                                    </td>
+
+                                    <td>
+                                        @if ($murid->status === 'aktif')
+                                            <span class="badge bg-success-subtle text-success">
+                                                Aktif
+                                            </span>
+                                        @else
+                                            <span class="badge bg-danger-subtle text-danger">
+                                                Nonaktif
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    <td class="text-end">
+                                        <div class="action-buttons">
+                                            <a href="{{ route($routePrefix . '.murid.show', $murid) }}" class="btn btn-sm btn-outline-secondary action-btn">
+                                                <i class="bi bi-eye"></i>
+                                                <span>Detail</span>
+                                            </a>
+
+                                            <a href="{{ route($routePrefix . '.murid.edit', $murid) }}" class="btn btn-sm btn-outline-primary action-btn">
+                                                <i class="bi bi-pencil-square"></i>
+                                                <span>Edit</span>
+                                            </a>
+
+                                            <form action="{{ route($routePrefix . '.murid.toggle-status', $murid) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('PATCH')
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm action-btn {{ $murid->status === 'aktif' ? 'btn-outline-danger' : 'btn-outline-success' }}"
+                                                    data-confirm="true"
+                                                    data-confirm-message="{{ $confirmMessage }}"
+                                                    data-confirm-yes="{{ $murid->status === 'aktif' ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan' }}"
+                                                    data-confirm-yes-class="{{ $murid->status === 'aktif' ? 'btn-danger' : 'btn-success' }}"
+                                                >
+                                                    @if ($murid->status === 'aktif')
+                                                        <i class="bi bi-x-circle"></i>
+                                                        <span>Nonaktif</span>
+                                                    @else
+                                                        <i class="bi bi-check-circle"></i>
+                                                        <span>Aktifkan</span>
+                                                    @endif
+                                                </button>
+                                            </form>
                                         </div>
-                                    </div>
-                                </td>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted py-4">
+                                        Data murid tidak ditemukan sesuai filter.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
 
-                                <td>
-                                    <div>NIS: {{ $murid->nis ?? '-' }}</div>
-                                    <small class="text-muted">NISN: {{ $murid->nisn ?? '-' }}</small>
-                                </td>
-
-                                <td>
-                                    @if ($murid->kelas)
-                                        <span class="badge bg-primary-subtle text-primary">
-                                            {{ $murid->kelas->nama_kelas }}
-                                        </span>
-                                    @else
-                                        <span class="badge bg-warning-subtle text-warning">
-                                            Belum ada kelas
-                                        </span>
-                                    @endif
-                                </td>
-
-                                <td>
-                                    @if ($murid->waliMurid)
-                                        <div>{{ $murid->waliMurid->nama_wali }}</div>
-
-                                        <small class="text-muted">
-                                            {{ ucfirst($murid->waliMurid->hubungan) }} |
-                                            {{ $murid->waliMurid->no_whatsapp }}
-                                        </small>
-                                    @else
-                                        <span class="badge bg-warning-subtle text-warning">
-                                            Belum terhubung
-                                        </span>
-                                    @endif
-                                </td>
-
-                                <td>
-                                    {{ $murid->jenis_kelamin === 'L' ? 'L' : 'P' }}
-                                </td>
-
-                                <td>
-                                    @if ($murid->status === 'aktif')
-                                        <span class="badge bg-success-subtle text-success">
-                                            Aktif
-                                        </span>
-                                    @else
-                                        <span class="badge bg-danger-subtle text-danger">
-                                            Nonaktif
-                                        </span>
-                                    @endif
-                                </td>
-
-                                <td class="text-end">
-                                    <div class="action-buttons">
-                                        <a href="{{ route($routePrefix . '.murid.show', $murid) }}" class="btn btn-sm btn-outline-secondary action-btn">
-                                            <i class="bi bi-eye"></i>
-                                            <span>Detail</span>
-                                        </a>
-
-                                        <a href="{{ route($routePrefix . '.murid.edit', $murid) }}" class="btn btn-sm btn-outline-primary action-btn">
-                                            <i class="bi bi-pencil-square"></i>
-                                            <span>Edit</span>
-                                        </a>
-
-                                        <form action="{{ route($routePrefix . '.murid.toggle-status', $murid) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('PATCH')
-
-                                            <button
-                                                type="submit"
-                                                class="btn btn-sm action-btn {{ $murid->status === 'aktif' ? 'btn-outline-danger' : 'btn-outline-success' }}"
-                                                data-confirm="true"
-                                                data-confirm-message="{{ $confirmMessage }}"
-                                                data-confirm-yes="{{ $murid->status === 'aktif' ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan' }}"
-                                                data-confirm-yes-class="{{ $murid->status === 'aktif' ? 'btn-danger' : 'btn-success' }}"
-                                            >
-                                                @if ($murid->status === 'aktif')
-                                                    <i class="bi bi-x-circle"></i>
-                                                    <span>Nonaktif</span>
-                                                @else
-                                                    <i class="bi bi-check-circle"></i>
-                                                    <span>Aktifkan</span>
-                                                @endif
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
-                                    Data murid belum tersedia.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="mt-3">
-                {{ $murids->links() }}
-            </div>
+                <div class="mt-3">
+                    {{ $murids->links() }}
+                </div>
+            @endif
         </div>
     </div>
+
+    <style>
+        .empty-state-filter {
+            border: 1px dashed #cbd5e1;
+            border-radius: 14px;
+            background: #f8fafc;
+            padding: 42px 24px;
+        }
+
+        .empty-icon {
+            width: 58px;
+            height: 58px;
+            border-radius: 999px;
+            background: #dbeafe;
+            color: #2563eb;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            margin-bottom: 14px;
+        }
+    </style>
 
 @endsection

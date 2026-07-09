@@ -1,8 +1,6 @@
 {{-- penjelasan: File ini adalah halaman daftar pegawai. --}}
-{{-- penjelasan: File ini dipanggil oleh PegawaiController method index(). --}}
-{{-- penjelasan: Halaman ini bisa diakses oleh Super Admin dan Admin. --}}
-{{-- penjelasan: Data $pegawais dikirim dari controller menggunakan compact('pegawais', 'routePrefix'). --}}
-{{-- penjelasan: routePrefix dipakai agar link bisa menyesuaikan apakah user login sebagai super-admin atau admin. --}}
+{{-- penjelasan: Halaman ini hanya menampilkan data guru karena staff sudah tidak digunakan. --}}
+{{-- penjelasan: Data staff lama tidak ditampilkan pada daftar pegawai. --}}
 {{-- penjelasan: Alert berhasil, gagal, dan validasi sudah memakai komponen global admin.components.alert. --}}
 {{-- penjelasan: Tombol aktif/nonaktif memakai modal konfirmasi global melalui data-confirm="true". --}}
 
@@ -19,7 +17,7 @@
                     <div>
                         <h4 class="fw-bold mb-1">Data Pegawai</h4>
                         <p class="text-muted mb-0">
-                            Kelola data guru dan staff SMPN 6 Bati-Bati.
+                            Kelola data guru SMPN 6 Bati-Bati.
                         </p>
                     </div>
 
@@ -35,9 +33,10 @@
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <form action="{{ route($routePrefix . '.pegawai.index') }}" method="GET" class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-7">
                     <label class="form-label">
                         Cari Pegawai
+                    </label>
 
                     <input
                         type="text"
@@ -46,18 +45,6 @@
                         placeholder="Cari nama, NIP, atau jabatan"
                         value="{{ request('search') }}"
                     >
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">
-                        Jenis Pegawai
-                    </label>
-
-                    <select name="jenis_pegawai" class="form-select">
-                        <option value="">Semua Jenis</option>
-                        <option value="guru" {{ request('jenis_pegawai') === 'guru' ? 'selected' : '' }}>Guru</option>
-                        <option value="staff" {{ request('jenis_pegawai') === 'staff' ? 'selected' : '' }}>Staff</option>
-                    </select>
                 </div>
 
                 <div class="col-md-3">
@@ -86,7 +73,7 @@
         <div class="card-header bg-white border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
             <div>
                 <h6 class="fw-bold mb-0">Daftar Pegawai</h6>
-                <small class="text-muted">Data guru dan staff yang terdaftar</small>
+                <small class="text-muted">Data guru yang terdaftar</small>
             </div>
 
             <span class="badge bg-primary-subtle text-primary">
@@ -112,10 +99,9 @@
                     <tbody>
                         @forelse ($pegawais as $pegawai)
                             @php
-                                // penjelasan: Pesan konfirmasi dibuat sesuai status pegawai.
                                 $confirmMessage = $pegawai->status === 'aktif'
-                                    ? 'Apakah Anda yakin ingin menonaktifkan pegawai ini? Data tidak dihapus, hanya statusnya menjadi nonaktif.'
-                                    : 'Apakah Anda yakin ingin mengaktifkan pegawai ini kembali?';
+                                    ? 'Apakah Anda yakin ingin menonaktifkan guru ini? Data tidak dihapus, hanya statusnya menjadi nonaktif.'
+                                    : 'Apakah Anda yakin ingin mengaktifkan guru ini kembali?';
                             @endphp
 
                             <tr>
@@ -128,8 +114,8 @@
                                 </td>
 
                                 <td>
-                                    <span class="badge {{ $pegawai->jenis_pegawai === 'guru' ? 'bg-primary-subtle text-primary' : 'bg-info-subtle text-info' }}">
-                                        {{ ucfirst($pegawai->jenis_pegawai) }}
+                                    <span class="badge bg-primary-subtle text-primary">
+                                        Guru
                                     </span>
                                 </td>
 
@@ -200,7 +186,7 @@
                         @empty
                             <tr>
                                 <td colspan="7" class="text-center text-muted py-4">
-                                    Data pegawai belum tersedia.
+                                    Data guru belum tersedia.
                                 </td>
                             </tr>
                         @endforelse

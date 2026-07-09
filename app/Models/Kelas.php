@@ -18,7 +18,7 @@ class Kelas extends Model
     use HasFactory;
 
     // penjelasan: Laravel biasanya menebak nama tabel dari nama model.
-    // penjelasan: Karena nama tabel kita adalah kelas, maka kita set manual agar tidak salah menjadi kelas.
+    // penjelasan: Karena nama tabel kita adalah kelas, maka kita set manual agar tidak salah.
     protected $table = 'kelas';
 
     /**
@@ -46,6 +46,14 @@ class Kelas extends Model
     public function murids()
     {
         return $this->hasMany(Murid::class, 'kelas_id');
+    }
+
+    // penjelasan: Relasi ini menghubungkan kelas ke banyak nilai.
+    // penjelasan: Dipakai untuk rekap nilai per kelas dan format rapor.
+    // penjelasan: Dipanggil misalnya $kelas->nilais.
+    public function nilais()
+    {
+        return $this->hasMany(Nilai::class, 'kelas_id');
     }
 
     // penjelasan: Fungsi ini mengecek apakah kelas masih aktif.

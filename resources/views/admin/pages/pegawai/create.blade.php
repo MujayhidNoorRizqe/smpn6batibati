@@ -1,10 +1,8 @@
 {{-- penjelasan: File ini adalah halaman tambah pegawai. --}}
-{{-- penjelasan: File ini dipanggil oleh PegawaiController method create(). --}}
-{{-- penjelasan: Form ini dikirim ke PegawaiController method store(). --}}
+{{-- penjelasan: Form ini hanya digunakan untuk menambahkan data guru. --}}
+{{-- penjelasan: Jika akun login dipilih, nama pegawai otomatis mengikuti nama akun login. --}}
+{{-- penjelasan: Jika akun login belum dipilih, nama pegawai bisa diisi manual. --}}
 {{-- penjelasan: enctype multipart/form-data wajib digunakan karena form memiliki upload foto. --}}
-{{-- penjelasan: Alert validasi tidak ditulis lokal karena sudah ditampilkan global dari admin.components.alert. --}}
-{{-- penjelasan: Semua field wajib diberi tanda (*) dan field opsional diberi label (Opsional). --}}
-{{-- penjelasan: Pada form tambah pegawai ini, nama pegawai, jenis pegawai, jabatan, alamat, dan status wajib diisi. --}}
 
 @extends('admin.layouts.app')
 
@@ -18,7 +16,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0">
                     <h5 class="fw-bold mb-0">Tambah Pegawai</h5>
-                    <small class="text-muted">Tambahkan data guru atau staff.</small>
+                    <small class="text-muted">Tambahkan data guru.</small>
                 </div>
 
                 <div class="card-body">
@@ -31,17 +29,29 @@
                     <form action="{{ route($routePrefix . '.pegawai.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
 
+                        <input type="hidden" name="jenis_pegawai" value="guru">
+
                         <div class="mb-3">
                             <label class="form-label">
                                 Akun Login <span class="text-muted">(Opsional)</span>
                             </label>
 
-                            <select name="user_id" class="form-select @error('user_id') is-invalid @enderror">
-                                <option value="">Belum dihubungkan</option>
+                            <select
+                                name="user_id"
+                                id="user_id"
+                                class="form-select @error('user_id') is-invalid @enderror"
+                            >
+                                <option value="" data-name="">
+                                    Belum dihubungkan
+                                </option>
 
                                 @foreach ($users as $user)
-                                    <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
-                                        {{ $user->name }} - {{ $user->email }} - {{ ucwords($user->role) }}
+                                    <option
+                                        value="{{ $user->id }}"
+                                        data-name="{{ $user->name }}"
+                                        {{ old('user_id') == $user->id ? 'selected' : '' }}
+                                    >
+                                        {{ $user->name }} - {{ $user->email }} - Guru
                                     </option>
                                 @endforeach
                             </select>
@@ -51,7 +61,7 @@
                             @enderror
 
                             <small class="text-muted">
-                                Pilih akun guru/staff jika pegawai sudah memiliki akun login. Pastikan jenis pegawai sesuai dengan role akun.
+                                Pilih akun guru jika pegawai sudah memiliki akun login. Nama pegawai akan otomatis mengikuti nama akun yang dipilih.
                             </small>
                         </div>
 
@@ -81,15 +91,19 @@
                             <input
                                 type="text"
                                 name="nama_pegawai"
+                                id="nama_pegawai"
                                 class="form-control @error('nama_pegawai') is-invalid @enderror"
                                 value="{{ old('nama_pegawai') }}"
-                                placeholder="Masukkan nama lengkap pegawai"
-                                required
+                                placeholder="Masukkan nama lengkap guru"
                             >
 
                             @error('nama_pegawai')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+
+                            <small class="text-muted" id="namaPegawaiHelp">
+                                Jika akun login dipilih, nama pegawai otomatis mengikuti nama akun tersebut.
+                            </small>
                         </div>
 
                         <div class="mb-3">
@@ -97,14 +111,14 @@
                                 Jenis Pegawai <span class="text-danger">*</span>
                             </label>
 
-                            <select name="jenis_pegawai" class="form-select @error('jenis_pegawai') is-invalid @enderror" required>
-                                <option value="">Pilih Jenis</option>
-                                <option value="guru" {{ old('jenis_pegawai') === 'guru' ? 'selected' : '' }}>Guru</option>
-                                <option value="staff" {{ old('jenis_pegawai') === 'staff' ? 'selected' : '' }}>Staff</option>
-                            </select>
+                            <input type="text" class="form-control" value="Guru" disabled>
+
+                            <small class="text-muted">
+                                Jenis pegawai saat ini hanya Guru.
+                            </small>
 
                             @error('jenis_pegawai')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror
                         </div>
 
@@ -118,7 +132,7 @@
                                 name="jabatan"
                                 class="form-control @error('jabatan') is-invalid @enderror"
                                 value="{{ old('jabatan') }}"
-                                placeholder="Contoh: Guru Matematika, Staff TU"
+                                placeholder="Contoh: Guru Matematika"
                                 required
                             >
 
@@ -170,7 +184,7 @@
                                 name="alamat"
                                 class="form-control @error('alamat') is-invalid @enderror"
                                 rows="3"
-                                placeholder="Masukkan alamat lengkap pegawai"
+                                placeholder="Masukkan alamat lengkap guru"
                                 required
                             >{{ old('alamat') }}</textarea>
 
@@ -231,7 +245,7 @@
                                 type="submit"
                                 class="btn btn-primary"
                                 data-confirm="true"
-                                data-confirm-message="Apakah Anda yakin ingin menyimpan data pegawai baru ini?"
+                                data-confirm-message="Apakah Anda yakin ingin menyimpan data guru baru ini?"
                                 data-confirm-yes="Ya, Simpan"
                                 data-confirm-yes-class="btn-primary"
                             >
@@ -246,5 +260,42 @@
 
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const userSelect = document.getElementById('user_id');
+            const namaInput = document.getElementById('nama_pegawai');
+            const helpText = document.getElementById('namaPegawaiHelp');
+
+            function syncNamaPegawaiFromUser() {
+                if (! userSelect || ! namaInput) {
+                    return;
+                }
+
+                const selectedOption = userSelect.options[userSelect.selectedIndex];
+                const selectedName = selectedOption ? selectedOption.getAttribute('data-name') : '';
+
+                if (selectedName) {
+                    namaInput.value = selectedName;
+                    namaInput.readOnly = true;
+
+                    if (helpText) {
+                        helpText.textContent = 'Nama pegawai otomatis mengikuti akun login yang dipilih.';
+                    }
+                } else {
+                    namaInput.readOnly = false;
+
+                    if (helpText) {
+                        helpText.textContent = 'Jika akun login belum dipilih, nama pegawai dapat diisi manual.';
+                    }
+                }
+            }
+
+            if (userSelect) {
+                userSelect.addEventListener('change', syncNamaPegawaiFromUser);
+                syncNamaPegawaiFromUser();
+            }
+        });
+    </script>
 
 @endsection

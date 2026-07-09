@@ -1,5 +1,6 @@
 {{-- penjelasan: Halaman ini digunakan guru untuk melihat detail absensi murid pada jadwal hari ini. --}}
 {{-- penjelasan: Data yang tampil adalah absensi murid sesuai jadwal pelajaran dan tanggal hari ini. --}}
+{{-- penjelasan: Status absensi murid terdiri dari hadir, izin, sakit, alpha, dan terlambat. --}}
 
 @extends('admin.layouts.app')
 
@@ -12,7 +13,8 @@
         'hadir' => 'bg-success-subtle text-success',
         'izin' => 'bg-info-subtle text-info',
         'sakit' => 'bg-danger-subtle text-danger',
-        'alpha' => 'bg-danger-subtle text-danger',
+        'alpha' => 'bg-dark-subtle text-dark',
+        'terlambat' => 'bg-warning-subtle text-warning',
     ];
 @endphp
 
@@ -37,7 +39,7 @@
 </div>
 
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-6 col-xl">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="text-muted small">Hadir</div>
@@ -46,7 +48,7 @@
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-6 col-xl">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="text-muted small">Izin</div>
@@ -55,7 +57,7 @@
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-6 col-xl">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="text-muted small">Sakit</div>
@@ -64,11 +66,20 @@
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-6 col-xl">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="text-muted small">Alpha</div>
                 <h4 class="fw-bold mb-0">{{ $statusCounts['alpha'] ?? 0 }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Terlambat</div>
+                <h4 class="fw-bold mb-0">{{ $statusCounts['terlambat'] ?? 0 }}</h4>
             </div>
         </div>
     </div>

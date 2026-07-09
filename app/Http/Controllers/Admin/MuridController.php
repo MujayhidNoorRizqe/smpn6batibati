@@ -7,6 +7,8 @@
 // penjelasan: Semua validasi memakai pesan Bahasa Indonesia agar selaras dengan UI global.
 // penjelasan: Nama murid, kelas, jenis kelamin, wali murid, NISN, tanggal lahir, dan status wajib diisi.
 // penjelasan: NIS dan foto bersifat opsional.
+// penjelasan: Pada halaman index, data murid tidak langsung tampil sebelum user melakukan filter.
+// penjelasan: Setelah filter dilakukan, daftar murid diurutkan berdasarkan nama murid secara alfabetis seperti daftar absen.
 
 namespace App\Http\Controllers\Admin;
 
@@ -23,7 +25,10 @@ use App\Models\WaliMurid;
 // penjelasan: Model WaliMurid digunakan untuk memilih wali murid pada form murid.
 
 use Illuminate\Http\Request;
-// penjelasan: Request digunakan untuk mengambil data dari form tambah dan edit murid.
+// penjelasan: Request digunakan untuk mengambil data dari form tambah, edit, dan filter murid.
+
+use Illuminate\Pagination\LengthAwarePaginator;
+// penjelasan: LengthAwarePaginator digunakan agar variabel $murids tetap aman walaupun data belum difilter.
 
 use Illuminate\Support\Facades\Storage;
 // penjelasan: Storage digunakan untuk menyimpan dan menghapus foto murid.
@@ -47,11 +52,45 @@ class MuridController extends Controller
     }
 
     /**
-     * penjelasan: Method index digunakan untuk menampilkan daftar murid.
+     * penjelasan: Method index digunakan untuk menampilkan halaman Data Murid.
      * penjelasan: Method ini dipanggil oleh route GET /super-admin/murid atau /admin/murid.
+     * penjelasan: Sebelum filter dilakukan, daftar murid tidak ditampilkan.
+     * penjelasan: Setelah filter dilakukan, daftar murid tampil urut berdasarkan nama murid secara alfabetis.
      */
     public function index(Request $request)
     {
+        $hasFilter = $request->filled('search')
+            || $request->filled('kelas_id')
+            || $request->filled('jenis_kelamin')
+            || $request->filled('status');
+
+        $kelasList = Kelas::where('status', 'aktif')
+            ->orderBy('tingkat')
+            ->orderBy('nama_kelas')
+            ->get();
+
+        $routePrefix = $this->routePrefix();
+
+        if (! $hasFilter) {
+            $murids = new LengthAwarePaginator(
+                [],
+                0,
+                10,
+                LengthAwarePaginator::resolveCurrentPage(),
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]
+            );
+
+            return view('admin.pages.murid.index', compact(
+                'murids',
+                'kelasList',
+                'routePrefix',
+                'hasFilter'
+            ));
+        }
+
         $query = Murid::with(['kelas', 'waliMurid']);
 
         if ($request->filled('search')) {
@@ -76,16 +115,19 @@ class MuridController extends Controller
             $query->where('status', $request->status);
         }
 
-        $murids = $query->latest()->paginate(10)->withQueryString();
+        $murids = $query
+            ->orderByRaw('LOWER(nama_murid) ASC')
+            ->orderBy('nama_murid')
+            ->orderBy('id')
+            ->paginate(10)
+            ->withQueryString();
 
-        $kelasList = Kelas::where('status', 'aktif')
-            ->orderBy('tingkat')
-            ->orderBy('nama_kelas')
-            ->get();
-
-        $routePrefix = $this->routePrefix();
-
-        return view('admin.pages.murid.index', compact('murids', 'kelasList', 'routePrefix'));
+        return view('admin.pages.murid.index', compact(
+            'murids',
+            'kelasList',
+            'routePrefix',
+            'hasFilter'
+        ));
     }
 
     /**

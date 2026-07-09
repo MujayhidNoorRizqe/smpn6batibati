@@ -1,6 +1,8 @@
 {{-- penjelasan: Halaman ini digunakan guru untuk menginput absensi murid pada jadwal hari ini. --}}
 {{-- penjelasan: Semua murid aktif pada kelas terkait wajib diberi status absensi. --}}
+{{-- penjelasan: Daftar murid yang tampil hanya murid dari kelas pada jadwal yang dipilih. --}}
 {{-- penjelasan: Tanggal absensi otomatis dari sistem. --}}
+{{-- penjelasan: Status absensi murid terdiri dari hadir, izin, sakit, alpha, dan terlambat. --}}
 
 @extends('admin.layouts.app')
 
@@ -15,7 +17,7 @@
                 <div>
                     <h4 class="fw-bold mb-1">Input Absensi Murid</h4>
                     <p class="text-muted mb-0">
-                        Isi status absensi murid sesuai jadwal pelajaran hari ini.
+                        Kelas {{ $jadwalPelajaran->kelas?->nama_kelas ?? '-' }} - {{ $jadwalPelajaran->mataPelajaran?->nama_mapel ?? '-' }}.
                     </p>
                 </div>
 
@@ -28,10 +30,25 @@
     </div>
 </div>
 
+@if ($errors->any())
+    <div class="alert alert-danger border-0 rounded-3 shadow-sm">
+        <div class="fw-semibold mb-1">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            Data belum valid
+        </div>
+
+        <ul class="mb-0 ps-3">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-header bg-white border-0">
         <h6 class="fw-bold mb-0">Informasi Jadwal</h6>
-        <small class="text-muted">Pastikan jadwal dan kelas sudah sesuai.</small>
+        <small class="text-muted">Pastikan jadwal dan kelas sudah sesuai sebelum menyimpan absensi.</small>
     </div>
 
     <div class="card-body">
@@ -68,11 +85,17 @@
 </div>
 
 <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white border-0">
-        <h6 class="fw-bold mb-0">Daftar Murid</h6>
-        <small class="text-muted">
-            Status absensi setiap murid wajib dipilih.
-        </small>
+    <div class="card-header bg-white border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+        <div>
+            <h6 class="fw-bold mb-0">Daftar Murid Kelas {{ $jadwalPelajaran->kelas?->nama_kelas ?? '-' }}</h6>
+            <small class="text-muted">
+                Status absensi setiap murid wajib dipilih.
+            </small>
+        </div>
+
+        <span class="badge bg-primary-subtle text-primary">
+            {{ $murids->count() }} murid aktif
+        </span>
     </div>
 
     <div class="card-body">
@@ -87,7 +110,7 @@
                                 <th style="width: 60px;">No</th>
                                 <th>Nama Murid</th>
                                 <th>NISN</th>
-                                <th style="width: 210px;">Status <span class="text-danger">*</span></th>
+                                <th style="width: 230px;">Status <span class="text-danger">*</span></th>
                                 <th>Keterangan <span class="text-muted">(Opsional)</span></th>
                             </tr>
                         </thead>
@@ -120,6 +143,7 @@
                                             <option value="izin" {{ $selectedStatus === 'izin' ? 'selected' : '' }}>Izin</option>
                                             <option value="sakit" {{ $selectedStatus === 'sakit' ? 'selected' : '' }}>Sakit</option>
                                             <option value="alpha" {{ $selectedStatus === 'alpha' ? 'selected' : '' }}>Alpha</option>
+                                            <option value="terlambat" {{ $selectedStatus === 'terlambat' ? 'selected' : '' }}>Terlambat</option>
                                         </select>
 
                                         @error('absensi.' . $loop->index . '.status_absen')
@@ -133,7 +157,7 @@
                                             name="absensi[{{ $loop->index }}][keterangan]"
                                             class="form-control @error('absensi.' . $loop->index . '.keterangan') is-invalid @enderror"
                                             value="{{ $keterangan }}"
-                                            placeholder="Contoh: izin keluarga, sakit demam"
+                                            placeholder="Contoh: izin keluarga, sakit demam, datang terlambat"
                                         >
 
                                         @error('absensi.' . $loop->index . '.keterangan')
@@ -162,7 +186,7 @@
                         type="submit"
                         class="btn btn-primary"
                         data-confirm="true"
-                        data-confirm-message="Apakah Anda yakin ingin menyimpan absensi murid ini?"
+                        data-confirm-message="Apakah Anda yakin ingin menyimpan absensi murid kelas {{ $jadwalPelajaran->kelas?->nama_kelas ?? '-' }}?"
                         data-confirm-yes="Ya, Simpan Absensi"
                         data-confirm-yes-class="btn-primary"
                     >

@@ -44,7 +44,15 @@ class TahunAjaran extends Model
     // penjelasan: Dipanggil misalnya $tahunAjaran->semesters.
     public function semesters()
     {
-        return $this->hasMany(Semester::class);
+        return $this->hasMany(Semester::class, 'tahun_ajaran_id');
+    }
+
+    // penjelasan: Relasi ini menghubungkan tahun ajaran ke banyak nilai.
+    // penjelasan: Dipakai untuk rekap nilai semester dan laporan nilai.
+    // penjelasan: Dipanggil misalnya $tahunAjaran->nilais.
+    public function nilais()
+    {
+        return $this->hasMany(Nilai::class, 'tahun_ajaran_id');
     }
 
     // penjelasan: Fungsi ini mengecek apakah tahun ajaran berstatus aktif.

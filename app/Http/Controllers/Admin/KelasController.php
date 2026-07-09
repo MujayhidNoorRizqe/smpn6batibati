@@ -7,23 +7,15 @@
 // penjelasan: Semua validasi memakai pesan Bahasa Indonesia agar selaras dengan UI global.
 // penjelasan: Nama kelas, tingkat, wali kelas, dan status kelas wajib diisi.
 // penjelasan: Controller ini juga menghitung total jumlah siswa per kelas melalui relasi murids.
+// penjelasan: Pada halaman index, data kelas dikelompokkan berdasarkan tingkat agar tampilan lebih rapi.
 
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-// penjelasan: Controller adalah class dasar bawaan Laravel untuk membuat controller.
-
 use App\Models\Kelas;
-// penjelasan: Model Kelas digunakan untuk mengambil, menyimpan, dan mengubah data pada tabel kelas.
-
 use App\Models\Pegawai;
-// penjelasan: Model Pegawai digunakan untuk mengambil data guru aktif sebagai pilihan wali kelas.
-
 use Illuminate\Http\Request;
-// penjelasan: Request digunakan untuk mengambil data dari form tambah/edit kelas.
-
 use Illuminate\Validation\Rule;
-// penjelasan: Rule digunakan untuk validasi unique dan pilihan nilai tertentu.
 
 class KelasController extends Controller
 {
@@ -40,11 +32,10 @@ class KelasController extends Controller
     /**
      * penjelasan: Method index digunakan untuk menampilkan daftar kelas.
      * penjelasan: Method ini dipanggil oleh route GET /super-admin/kelas atau /admin/kelas.
+     * penjelasan: Data kelas ditampilkan berkelompok berdasarkan tingkat, contoh Tingkat 7, Tingkat 8, Tingkat 9.
      */
     public function index(Request $request)
     {
-        // penjelasan: with('waliKelas') mengambil relasi wali kelas.
-        // penjelasan: withCount(['murids as total_siswa']) menghitung jumlah siswa pada setiap kelas.
         $query = Kelas::with('waliKelas')
             ->withCount(['murids as total_siswa']);
 
@@ -65,11 +56,27 @@ class KelasController extends Controller
             $query->where('status', $request->status);
         }
 
-        $kelasList = $query->latest()->paginate(10)->withQueryString();
+        $kelasList = $query
+            ->orderBy('tingkat')
+            ->orderBy('nama_kelas')
+            ->get();
+
+        $kelasPerTingkat = $kelasList->groupBy(function ($kelas) {
+            return $kelas->tingkat ?: 'Lainnya';
+        });
+
+        $totalKelas = $kelasList->count();
+        $totalSiswa = $kelasList->sum('total_siswa');
 
         $routePrefix = $this->routePrefix();
 
-        return view('admin.pages.kelas.index', compact('kelasList', 'routePrefix'));
+        return view('admin.pages.kelas.index', compact(
+            'kelasList',
+            'kelasPerTingkat',
+            'totalKelas',
+            'totalSiswa',
+            'routePrefix'
+        ));
     }
 
     /**
@@ -118,8 +125,6 @@ class KelasController extends Controller
      */
     public function show(Kelas $kelas)
     {
-        // penjelasan: load('waliKelas') mengambil data wali kelas.
-        // penjelasan: loadCount(['murids as total_siswa']) menghitung jumlah siswa pada kelas ini.
         $kelas->load('waliKelas');
         $kelas->loadCount(['murids as total_siswa']);
 

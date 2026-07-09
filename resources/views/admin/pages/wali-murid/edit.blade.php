@@ -1,16 +1,10 @@
-{{-- penjelasan: File ini adalah halaman edit wali murid. --}}
-{{-- penjelasan: File ini dipanggil oleh WaliMuridController method edit(). --}}
-{{-- penjelasan: Form pada file ini dikirim ke WaliMuridController method update(). --}}
-{{-- penjelasan: Data $waliMurid berisi data wali murid yang sedang diedit. --}}
-{{-- penjelasan: Alert validasi tidak ditulis lokal karena sudah ditampilkan global dari admin.components.alert. --}}
-{{-- penjelasan: Nama wali, hubungan, nomor WhatsApp, alamat, dan status wajib diisi. --}}
-{{-- penjelasan: NIK, pekerjaan, dan nomor HP bersifat opsional. --}}
-{{-- penjelasan: Nomor WhatsApp langsung diarahkan memakai format +62. --}}
-{{-- penjelasan: Tombol Simpan Perubahan memakai modal konfirmasi global agar user memilih Ya atau Batal sebelum perubahan disimpan. --}}
+{{-- penjelasan: File ini adalah halaman edit user. --}}
+{{-- penjelasan: Role yang bisa dipilih hanya Admin dan Guru. --}}
+{{-- penjelasan: Role Staff sudah tidak digunakan pada sistem. --}}
 
 @extends('admin.layouts.app')
 
-@section('title', 'Edit Wali Murid')
+@section('title', 'Edit User')
 
 @section('content')
 
@@ -19,8 +13,8 @@
 
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0">
-                    <h5 class="fw-bold mb-0">Edit Wali Murid</h5>
-                    <small class="text-muted">Ubah data orang tua atau wali murid.</small>
+                    <h5 class="fw-bold mb-0">Edit User</h5>
+                    <small class="text-muted">Ubah nama, email, role, dan status user.</small>
                 </div>
 
                 <div class="card-body">
@@ -30,139 +24,72 @@
                         Field bertanda <span class="text-danger">*</span> wajib diisi.
                     </div>
 
-                    <form action="{{ route($routePrefix . '.wali-murid.update', $waliMurid) }}" method="POST">
+                    <form action="{{ route('super-admin.users.update', $user) }}" method="POST">
                         @csrf
                         @method('PUT')
 
                         <div class="mb-3">
                             <label class="form-label">
-                                Nama Wali <span class="text-danger">*</span>
+                                Nama User <span class="text-danger">*</span>
                             </label>
 
                             <input
                                 type="text"
-                                name="nama_wali"
-                                class="form-control @error('nama_wali') is-invalid @enderror"
-                                value="{{ old('nama_wali', $waliMurid->nama_wali) }}"
-                                placeholder="Masukkan nama wali murid"
+                                name="name"
+                                class="form-control @error('name') is-invalid @enderror"
+                                value="{{ old('name', $user->name) }}"
                                 required
                             >
 
-                            @error('nama_wali')
+                            @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">
-                                Hubungan <span class="text-danger">*</span>
-                            </label>
-
-                            <select name="hubungan" class="form-select @error('hubungan') is-invalid @enderror" required>
-                                <option value="">Pilih Hubungan</option>
-                                <option value="ayah" {{ old('hubungan', $waliMurid->hubungan) === 'ayah' ? 'selected' : '' }}>Ayah</option>
-                                <option value="ibu" {{ old('hubungan', $waliMurid->hubungan) === 'ibu' ? 'selected' : '' }}>Ibu</option>
-                                <option value="wali" {{ old('hubungan', $waliMurid->hubungan) === 'wali' ? 'selected' : '' }}>Wali</option>
-                            </select>
-
-                            @error('hubungan')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">
-                                NIK <span class="text-muted">(Opsional)</span>
+                                Email <span class="text-danger">*</span>
                             </label>
 
                             <input
-                                type="text"
-                                name="nik"
-                                class="form-control @error('nik') is-invalid @enderror"
-                                value="{{ old('nik', $waliMurid->nik) }}"
-                                placeholder="Masukkan NIK jika ada"
-                            >
-
-                            @error('nik')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
-                            <small class="text-muted">
-                                NIK boleh dikosongkan, tetapi jika diisi tidak boleh sama dengan wali lain.
-                            </small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">
-                                Pekerjaan <span class="text-muted">(Opsional)</span>
-                            </label>
-
-                            <input
-                                type="text"
-                                name="pekerjaan"
-                                class="form-control @error('pekerjaan') is-invalid @enderror"
-                                value="{{ old('pekerjaan', $waliMurid->pekerjaan) }}"
-                                placeholder="Contoh: Petani, PNS, Wiraswasta"
-                            >
-
-                            @error('pekerjaan')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">
-                                Nomor HP <span class="text-muted">(Opsional)</span>
-                            </label>
-
-                            <input
-                                type="text"
-                                name="no_hp"
-                                class="form-control @error('no_hp') is-invalid @enderror"
-                                value="{{ old('no_hp', $waliMurid->no_hp) }}"
-                                placeholder="Masukkan nomor HP jika ada"
-                            >
-
-                            @error('no_hp')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">
-                                Nomor WhatsApp <span class="text-danger">*</span>
-                            </label>
-
-                            <input
-                                type="text"
-                                name="no_whatsapp"
-                                class="form-control @error('no_whatsapp') is-invalid @enderror"
-                                value="{{ old('no_whatsapp', $waliMurid->no_whatsapp ?: '+62') }}"
-                                placeholder="+6281234567890"
+                                type="email"
+                                name="email"
+                                class="form-control @error('email') is-invalid @enderror"
+                                value="{{ old('email', $user->email) }}"
                                 required
                             >
 
-                            @error('no_whatsapp')
+                            @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">
-                                Alamat <span class="text-danger">*</span>
+                                Role <span class="text-danger">*</span>
                             </label>
 
-                            <textarea
-                                name="alamat"
-                                class="form-control @error('alamat') is-invalid @enderror"
-                                rows="3"
-                                placeholder="Masukkan alamat wali murid"
-                                required
-                            >{{ old('alamat', $waliMurid->alamat) }}</textarea>
+                            @if ($user->role === 'super_admin')
+                                <input type="text" class="form-control" value="Super Admin" disabled>
+                                <input type="hidden" name="role" value="super_admin">
 
-                            @error('alamat')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                                <small class="text-muted">
+                                    Role super admin dilindungi dan tidak bisa diubah dari halaman ini.
+                                </small>
+                            @else
+                                <select name="role" class="form-select @error('role') is-invalid @enderror" required>
+                                    <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
+                                    <option value="guru" {{ old('role', $user->role) === 'guru' ? 'selected' : '' }}>Guru</option>
+                                </select>
+
+                                @error('role')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+
+                                <small class="text-muted">
+                                    Role staff sudah tidak digunakan pada sistem.
+                                </small>
+                            @endif
                         </div>
 
                         <div class="mb-4">
@@ -170,22 +97,31 @@
                                 Status <span class="text-danger">*</span>
                             </label>
 
-                            <select name="status" class="form-select @error('status') is-invalid @enderror" required>
-                                <option value="aktif" {{ old('status', $waliMurid->status) === 'aktif' ? 'selected' : '' }}>Aktif</option>
-                                <option value="nonaktif" {{ old('status', $waliMurid->status) === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
-                            </select>
+                            @if ($user->id === auth()->id() || $user->role === 'super_admin')
+                                <input type="text" class="form-control" value="{{ ucfirst($user->status) }}" disabled>
+                                <input type="hidden" name="status" value="{{ $user->status }}">
 
-                            @error('status')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                                <small class="text-muted">
+                                    Status akun sendiri atau super admin tidak bisa dinonaktifkan dari halaman ini.
+                                </small>
+                            @else
+                                <select name="status" class="form-select @error('status') is-invalid @enderror" required>
+                                    <option value="aktif" {{ old('status', $user->status) === 'aktif' ? 'selected' : '' }}>Aktif</option>
+                                    <option value="nonaktif" {{ old('status', $user->status) === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
+                                </select>
+
+                                @error('status')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            @endif
                         </div>
 
                         <div class="d-flex justify-content-end gap-2">
                             <a
-                                href="{{ route($routePrefix . '.wali-murid.index') }}"
+                                href="{{ route('super-admin.users.index') }}"
                                 class="btn btn-outline-secondary"
                                 data-confirm="true"
-                                data-confirm-message="Batalkan edit wali murid? Perubahan yang belum disimpan akan hilang."
+                                data-confirm-message="Batalkan edit user? Perubahan yang belum disimpan akan hilang."
                                 data-confirm-yes="Ya, Batalkan"
                                 data-confirm-yes-class="btn-danger"
                             >
@@ -196,7 +132,7 @@
                                 type="submit"
                                 class="btn btn-primary"
                                 data-confirm="true"
-                                data-confirm-message="Apakah Anda yakin ingin menyimpan perubahan data wali murid ini?"
+                                data-confirm-message="Apakah Anda yakin ingin menyimpan perubahan data user ini?"
                                 data-confirm-yes="Ya, Simpan Perubahan"
                                 data-confirm-yes-class="btn-primary"
                             >
@@ -204,6 +140,7 @@
                                 Simpan Perubahan
                             </button>
                         </div>
+
                     </form>
 
                 </div>

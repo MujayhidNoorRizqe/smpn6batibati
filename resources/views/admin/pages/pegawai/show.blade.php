@@ -1,7 +1,6 @@
 {{-- penjelasan: File ini adalah halaman detail pegawai. --}}
-{{-- penjelasan: File ini dipanggil oleh PegawaiController method show(). --}}
-{{-- penjelasan: Halaman ini menampilkan data lengkap pegawai dan akun login yang terhubung. --}}
-{{-- penjelasan: Halaman ini tidak memiliki form, sehingga tidak membutuhkan validasi input. --}}
+{{-- penjelasan: Halaman ini menampilkan detail data guru dan akun login yang terhubung. --}}
+{{-- penjelasan: Staff sudah tidak ditampilkan pada sistem. --}}
 
 @extends('admin.layouts.app')
 
@@ -24,8 +23,8 @@
 
                     <h5 class="fw-bold mb-1">{{ $pegawai->nama_pegawai }}</h5>
 
-                    <span class="badge {{ $pegawai->jenis_pegawai === 'guru' ? 'bg-primary-subtle text-primary' : 'bg-info-subtle text-info' }}">
-                        {{ ucfirst($pegawai->jenis_pegawai) }}
+                    <span class="badge bg-primary-subtle text-primary">
+                        Guru
                     </span>
 
                     <div class="mt-3">
@@ -48,7 +47,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0">
                     <h5 class="fw-bold mb-0">Informasi Pegawai</h5>
-                    <small class="text-muted">Detail data guru/staff</small>
+                    <small class="text-muted">Detail data guru</small>
                 </div>
 
                 <div class="card-body">
@@ -65,7 +64,7 @@
 
                     <div class="row mb-3">
                         <div class="col-md-4 text-muted">Jenis Pegawai</div>
-                        <div class="col-md-8 fw-semibold">{{ ucfirst($pegawai->jenis_pegawai) }}</div>
+                        <div class="col-md-8 fw-semibold">Guru</div>
                     </div>
 
                     <div class="row mb-3">

@@ -1,9 +1,8 @@
-{{-- penjelasan: File ini adalah halaman tambah jadwal pelajaran. --}}
-{{-- penjelasan: File ini dipanggil oleh JadwalPelajaranController method create(). --}}
-{{-- penjelasan: Form pada file ini dikirim ke JadwalPelajaranController method store(). --}}
-{{-- penjelasan: Alert validasi tidak ditulis lokal karena sudah ditampilkan global dari admin.components.alert. --}}
-{{-- penjelasan: Semua field pada jadwal pelajaran wajib diisi. --}}
-{{-- penjelasan: Jadwal aktif akan divalidasi agar memakai data aktif dan tidak bentrok. --}}
+{{-- penjelasan: File ini adalah halaman pilih kelas untuk membuat jadwal pelajaran. --}}
+{{-- penjelasan: Jadwal pelajaran dibuat per kelas. --}}
+{{-- penjelasan: Kelas yang tampil berasal dari fitur Data Kelas. --}}
+{{-- penjelasan: Kelas dipisahkan berdasarkan tingkat, misalnya 7, 8, dan 9. --}}
+{{-- penjelasan: Setelah memilih kelas, user masuk ke halaman list hari Senin sampai Sabtu. --}}
 
 @extends('admin.layouts.app')
 
@@ -11,281 +10,286 @@
 
 @section('content')
 
-    <div class="row justify-content-center">
-        <div class="col-lg-9">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0">
-                    <h5 class="fw-bold mb-0">Tambah Jadwal Pelajaran</h5>
-                    <small class="text-muted">Tambahkan jadwal pelajaran untuk kelas dan guru.</small>
-                </div>
+<div class="page-content">
+    <div class="page-header-card">
+        <div>
+            <h1>Tambah Jadwal Pelajaran</h1>
+            <p>Pilih kelas terlebih dahulu, lalu susun jadwal per hari untuk satu minggu.</p>
+        </div>
 
-                <div class="card-body">
+        <a href="{{ route($routePrefix . '.jadwal-pelajaran.index') }}" class="btn btn-outline">
+            <i class="bi bi-arrow-left me-1"></i>
+            Kembali
+        </a>
+    </div>
 
-                    <div class="alert alert-info border-0 shadow-sm rounded-3">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Field bertanda <span class="text-danger">*</span> wajib diisi.
-                    </div>
+    @if (session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
 
-                    @if ($tahunAjarans->isEmpty())
-                        <div class="alert alert-warning border-0 shadow-sm rounded-3">
-                            <i class="bi bi-exclamation-triangle me-1"></i>
-                            Belum ada tahun ajaran aktif. Aktifkan tahun ajaran terlebih dahulu.
-                        </div>
-                    @endif
+    @if (session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
 
-                    @if ($semesters->isEmpty())
-                        <div class="alert alert-warning border-0 shadow-sm rounded-3">
-                            <i class="bi bi-exclamation-triangle me-1"></i>
-                            Belum ada semester aktif. Aktifkan semester terlebih dahulu.
-                        </div>
-                    @endif
-
-                    @if ($kelasList->isEmpty())
-                        <div class="alert alert-warning border-0 shadow-sm rounded-3">
-                            <i class="bi bi-exclamation-triangle me-1"></i>
-                            Belum ada kelas aktif. Tambahkan atau aktifkan data kelas terlebih dahulu.
-                        </div>
-                    @endif
-
-                    @if ($mataPelajarans->isEmpty())
-                        <div class="alert alert-warning border-0 shadow-sm rounded-3">
-                            <i class="bi bi-exclamation-triangle me-1"></i>
-                            Belum ada mata pelajaran aktif. Tambahkan atau aktifkan data mata pelajaran terlebih dahulu.
-                        </div>
-                    @endif
-
-                    @if ($gurus->isEmpty())
-                        <div class="alert alert-warning border-0 shadow-sm rounded-3">
-                            <i class="bi bi-exclamation-triangle me-1"></i>
-                            Belum ada guru aktif. Tambahkan atau aktifkan data pegawai guru terlebih dahulu.
-                        </div>
-                    @endif
-
-                    <form action="{{ route($routePrefix . '.jadwal-pelajaran.store') }}" method="POST">
-                        @csrf
-
-                        <div class="mb-3">
-                            <label class="form-label">
-                                Tahun Ajaran <span class="text-danger">*</span>
-                            </label>
-
-                            <select name="tahun_ajaran_id" class="form-select @error('tahun_ajaran_id') is-invalid @enderror" required>
-                                <option value="">Pilih Tahun Ajaran Aktif</option>
-
-                                @foreach ($tahunAjarans as $tahunAjaran)
-                                    <option value="{{ $tahunAjaran->id }}" {{ old('tahun_ajaran_id') == $tahunAjaran->id ? 'selected' : '' }}>
-                                        {{ $tahunAjaran->nama_tahun_ajaran }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            @error('tahun_ajaran_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
-                            <small class="text-muted">
-                                Jadwal aktif hanya boleh memakai tahun ajaran aktif.
-                            </small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">
-                                Semester <span class="text-danger">*</span>
-                            </label>
-
-                            <select name="semester_id" class="form-select @error('semester_id') is-invalid @enderror" required>
-                                <option value="">Pilih Semester Aktif</option>
-
-                                @foreach ($semesters as $semester)
-                                    <option value="{{ $semester->id }}" {{ old('semester_id') == $semester->id ? 'selected' : '' }}>
-                                        {{ $semester->nama_semester_label }} - {{ $semester->tahunAjaran?->nama_tahun_ajaran ?? '-' }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            @error('semester_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
-                            <small class="text-muted">
-                                Semester harus sesuai dengan tahun ajaran yang dipilih.
-                            </small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">
-                                Kelas <span class="text-danger">*</span>
-                            </label>
-
-                            <select name="kelas_id" class="form-select @error('kelas_id') is-invalid @enderror" required>
-                                <option value="">Pilih Kelas</option>
-
-                                @foreach ($kelasList as $kelas)
-                                    <option value="{{ $kelas->id }}" {{ old('kelas_id') == $kelas->id ? 'selected' : '' }}>
-                                        {{ $kelas->nama_kelas }} - Tingkat {{ $kelas->tingkat }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            @error('kelas_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">
-                                Mata Pelajaran <span class="text-danger">*</span>
-                            </label>
-
-                            <select name="mata_pelajaran_id" class="form-select @error('mata_pelajaran_id') is-invalid @enderror" required>
-                                <option value="">Pilih Mata Pelajaran</option>
-
-                                @foreach ($mataPelajarans as $mataPelajaran)
-                                    <option value="{{ $mataPelajaran->id }}" {{ old('mata_pelajaran_id') == $mataPelajaran->id ? 'selected' : '' }}>
-                                        {{ $mataPelajaran->kode_mapel }} - {{ $mataPelajaran->nama_mapel }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            @error('mata_pelajaran_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">
-                                Guru Pengajar <span class="text-danger">*</span>
-                            </label>
-
-                            <select name="guru_id" class="form-select @error('guru_id') is-invalid @enderror" required>
-                                <option value="">Pilih Guru</option>
-
-                                @foreach ($gurus as $guru)
-                                    <option value="{{ $guru->id }}" {{ old('guru_id') == $guru->id ? 'selected' : '' }}>
-                                        {{ $guru->nama_pegawai }}
-                                    </option>
-                                @endforeach
-                            </select>
-
-                            @error('guru_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
-                            <small class="text-muted">
-                                Guru yang tampil hanya pegawai jenis guru dan status aktif.
-                            </small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">
-                                Hari <span class="text-danger">*</span>
-                            </label>
-
-                            <select name="hari" class="form-select @error('hari') is-invalid @enderror" required>
-                                <option value="">Pilih Hari</option>
-                                <option value="senin" {{ old('hari') === 'senin' ? 'selected' : '' }}>Senin</option>
-                                <option value="selasa" {{ old('hari') === 'selasa' ? 'selected' : '' }}>Selasa</option>
-                                <option value="rabu" {{ old('hari') === 'rabu' ? 'selected' : '' }}>Rabu</option>
-                                <option value="kamis" {{ old('hari') === 'kamis' ? 'selected' : '' }}>Kamis</option>
-                                <option value="jumat" {{ old('hari') === 'jumat' ? 'selected' : '' }}>Jumat</option>
-                                <option value="sabtu" {{ old('hari') === 'sabtu' ? 'selected' : '' }}>Sabtu</option>
-                            </select>
-
-                            @error('hari')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">
-                                    Jam Mulai <span class="text-danger">*</span>
-                                </label>
-
-                                <input
-                                    type="time"
-                                    name="jam_mulai"
-                                    class="form-control @error('jam_mulai') is-invalid @enderror"
-                                    value="{{ old('jam_mulai') }}"
-                                    required
-                                >
-
-                                @error('jam_mulai')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">
-                                    Jam Selesai <span class="text-danger">*</span>
-                                </label>
-
-                                <input
-                                    type="time"
-                                    name="jam_selesai"
-                                    class="form-control @error('jam_selesai') is-invalid @enderror"
-                                    value="{{ old('jam_selesai') }}"
-                                    required
-                                >
-
-                                @error('jam_selesai')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-
-                                <small class="text-muted">
-                                    Jam selesai harus lebih besar dari jam mulai.
-                                </small>
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label">
-                                Status <span class="text-danger">*</span>
-                            </label>
-
-                            <select name="status" class="form-select @error('status') is-invalid @enderror" required>
-                                <option value="aktif" {{ old('status', 'aktif') === 'aktif' ? 'selected' : '' }}>Aktif</option>
-                                <option value="nonaktif" {{ old('status') === 'nonaktif' ? 'selected' : '' }}>Nonaktif</option>
-                            </select>
-
-                            @error('status')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-
-                            <small class="text-muted">
-                                Jadwal aktif akan dicek agar tidak bentrok dengan jadwal kelas dan guru.
-                            </small>
-                        </div>
-
-                        <div class="d-flex justify-content-end gap-2">
-                            <a
-                                href="{{ route($routePrefix . '.jadwal-pelajaran.index') }}"
-                                class="btn btn-outline-secondary"
-                                data-confirm="true"
-                                data-confirm-message="Batalkan tambah jadwal pelajaran? Data yang belum disimpan akan hilang."
-                                data-confirm-yes="Ya, Batalkan"
-                                data-confirm-yes-class="btn-danger"
-                            >
-                                Batal
-                            </a>
-
-                            <button
-                                type="submit"
-                                class="btn btn-primary"
-                                data-confirm="true"
-                                data-confirm-message="Apakah Anda yakin ingin menyimpan data jadwal pelajaran ini?"
-                                data-confirm-yes="Ya, Simpan"
-                                data-confirm-yes-class="btn-primary"
-                                {{ $tahunAjarans->isEmpty() || $semesters->isEmpty() || $kelasList->isEmpty() || $mataPelajarans->isEmpty() || $gurus->isEmpty() ? 'disabled' : '' }}
-                            >
-                                <i class="bi bi-save me-1"></i>
-                                Simpan Jadwal
-                            </button>
-                        </div>
-                    </form>
-                </div>
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h2>1. Pilih Kelas</h2>
+                <p>Kelas yang tampil berasal dari fitur Data Kelas dan dipisahkan berdasarkan tingkat.</p>
             </div>
         </div>
+
+        @if ($kelasPerTingkat->isEmpty())
+            <div class="empty-state">
+                Belum ada kelas aktif. Silakan tambahkan kelas terlebih dahulu pada menu Data Kelas.
+            </div>
+        @else
+            <div class="level-list">
+                @foreach ($kelasPerTingkat as $tingkat => $kelasItems)
+                    <div class="level-card">
+                        <div class="level-header">
+                            <div>
+                                <span>Tingkat</span>
+                                <h3>{{ $tingkat }}</h3>
+                            </div>
+
+                            <span class="badge">{{ $kelasItems->count() }} kelas</span>
+                        </div>
+
+                        <div class="class-grid">
+                            @foreach ($kelasItems as $kelas)
+                                <a
+                                    href="{{ route($routePrefix . '.jadwal-pelajaran.create-kelas', $kelas->id) }}"
+                                    class="class-card"
+                                >
+                                    <div class="class-icon">
+                                        <i class="bi bi-building"></i>
+                                    </div>
+
+                                    <div>
+                                        <span>Kelas</span>
+                                        <strong>{{ $kelas->nama_kelas }}</strong>
+                                    </div>
+
+                                    <small>
+                                        Wali Kelas: {{ $kelas->waliKelas->nama_pegawai ?? '-' }}
+                                    </small>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
+</div>
+
+<style>
+    .page-content {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .page-header-card,
+    .card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 22px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .page-header-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .page-header-card h1,
+    .card h2 {
+        margin: 0;
+        color: #0f172a;
+    }
+
+    .page-header-card p,
+    .card-header p {
+        margin: 6px 0 0;
+        color: #64748b;
+    }
+
+    .card-header {
+        margin-bottom: 18px;
+    }
+
+    .alert {
+        border-radius: 12px;
+        padding: 14px 16px;
+    }
+
+    .alert-success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .alert-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .level-list {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .level-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 18px;
+        background: #ffffff;
+    }
+
+    .level-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    .level-header span {
+        color: #64748b;
+        font-size: 13px;
+    }
+
+    .level-header h3 {
+        margin: 3px 0 0;
+        color: #0f172a;
+        font-size: 24px;
+        font-weight: 900;
+    }
+
+    .badge {
+        background: #dbeafe;
+        color: #2563eb;
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-weight: 800;
+        font-size: 13px;
+    }
+
+    .class-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .class-card {
+        min-height: 130px;
+        border: 1px solid #dbe3ef;
+        border-radius: 14px;
+        padding: 16px;
+        background: #f8fafc;
+        color: inherit;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 10px;
+        transition: 0.2s ease;
+    }
+
+    .class-card:hover {
+        border-color: #2563eb;
+        background: #eff6ff;
+        transform: translateY(-2px);
+    }
+
+    .class-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: #dbeafe;
+        color: #2563eb;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    .class-card span {
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .class-card strong {
+        display: block;
+        color: #0f172a;
+        font-size: 24px;
+        margin-top: 2px;
+    }
+
+    .class-card small {
+        color: #64748b;
+        font-size: 12px;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        padding: 11px 18px;
+        font-weight: 700;
+        text-decoration: none;
+        border: 1px solid transparent;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .btn-outline {
+        background: #ffffff;
+        color: #475569;
+        border-color: #cbd5e1;
+    }
+
+    .empty-state {
+        padding: 28px;
+        text-align: center;
+        color: #64748b;
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+        background: #f8fafc;
+    }
+
+    @media (max-width: 1200px) {
+        .class-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 900px) {
+        .class-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 700px) {
+        .page-header-card,
+        .level-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .class-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
 @endsection

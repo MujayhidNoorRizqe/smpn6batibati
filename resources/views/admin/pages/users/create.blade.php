@@ -1,9 +1,6 @@
 {{-- penjelasan: File ini adalah halaman form tambah user. --}}
-{{-- penjelasan: File ini dipanggil oleh UserController method create(). --}}
-{{-- penjelasan: Form pada halaman ini dikirim ke UserController method store(). --}}
-{{-- penjelasan: Alert validasi tidak ditulis lokal karena sudah ditampilkan global dari admin.components.alert. --}}
-{{-- penjelasan: Semua field penting diberi tanda wajib (*) agar user tahu data yang harus diisi. --}}
-{{-- penjelasan: Tombol Batal dan Simpan User memakai modal konfirmasi global melalui data-confirm="true". --}}
+{{-- penjelasan: Role yang bisa dibuat hanya Admin dan Guru. --}}
+{{-- penjelasan: Role Staff sudah tidak digunakan pada sistem. --}}
 
 @extends('admin.layouts.app')
 
@@ -17,7 +14,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-0">
                     <h5 class="fw-bold mb-0">Tambah User</h5>
-                    <small class="text-muted">Buat akun login untuk admin, guru, atau staff.</small>
+                    <small class="text-muted">Buat akun login untuk admin atau guru.</small>
                 </div>
 
                 <div class="card-body">
@@ -77,7 +74,6 @@
                                 <option value="">Pilih Role</option>
                                 <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
                                 <option value="guru" {{ old('role') === 'guru' ? 'selected' : '' }}>Guru</option>
-                                <option value="staff" {{ old('role') === 'staff' ? 'selected' : '' }}>Staff</option>
                             </select>
 
                             @error('role')
@@ -85,7 +81,7 @@
                             @enderror
 
                             <small class="text-muted">
-                                Akun super admin tidak dibuat dari form ini demi keamanan.
+                                Akun super admin tidak dibuat dari form ini demi keamanan. Role staff sudah tidak digunakan.
                             </small>
                         </div>
 

@@ -2,95 +2,128 @@
 
 // penjelasan: File ini adalah controller untuk Modul Jadwal Pelajaran.
 // penjelasan: Controller ini dipakai oleh Super Admin dan Admin.
-// penjelasan: Controller ini mengatur daftar, tambah, detail, edit, update, dan aktif/nonaktif jadwal pelajaran.
+// penjelasan: Jadwal pelajaran dibuat per kelas.
+// penjelasan: Alur tambah jadwal sekarang dibuat bertahap:
+// penjelasan: 1. Pilih kelas.
+// penjelasan: 2. Masuk halaman list hari Senin sampai Sabtu.
+// penjelasan: 3. Pilih hari.
+// penjelasan: 4. Isi jadwal per hari maksimal 6 pelajaran.
+// penjelasan: 5. Simpan dan kembali ke halaman list hari kelas tersebut.
 // penjelasan: Controller ini juga memvalidasi agar jadwal guru dan kelas tidak bentrok.
-// penjelasan: Semua validasi memakai pesan Bahasa Indonesia agar selaras dengan UI global.
 
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-// penjelasan: Controller adalah class dasar Laravel untuk membuat controller.
-
 use App\Models\JadwalPelajaran;
-// penjelasan: JadwalPelajaran adalah model utama modul ini.
-
 use App\Models\Kelas;
-// penjelasan: Kelas digunakan untuk pilihan kelas pada form jadwal.
-
 use App\Models\MataPelajaran;
-// penjelasan: MataPelajaran digunakan untuk pilihan mata pelajaran pada form jadwal.
-
 use App\Models\Pegawai;
-// penjelasan: Pegawai digunakan untuk pilihan guru pada form jadwal.
-
 use App\Models\Semester;
-// penjelasan: Semester digunakan untuk pilihan semester pada form jadwal.
-
 use App\Models\TahunAjaran;
-// penjelasan: TahunAjaran digunakan untuk pilihan tahun ajaran pada form jadwal.
-
 use Illuminate\Http\Request;
-// penjelasan: Request digunakan untuk mengambil data dari form dan filter.
-
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-// penjelasan: Rule digunakan untuk validasi pilihan enum.
-
 use Illuminate\Validation\ValidationException;
-// penjelasan: ValidationException digunakan untuk mengembalikan error validasi manual.
 
 class JadwalPelajaranController extends Controller
 {
-    /**
-     * penjelasan: routePrefix digunakan agar view yang sama bisa dipakai oleh Super Admin dan Admin.
-     */
     private function routePrefix(): string
     {
         return auth()->user()->role === 'super_admin' ? 'super-admin' : 'admin';
     }
 
-    /**
-     * penjelasan: Method index menampilkan daftar jadwal pelajaran.
-     * penjelasan: Method ini juga memproses filter tahun ajaran, semester, kelas, guru, hari, dan status.
-     */
+    private function hariList(): array
+    {
+        return [
+            'senin' => 'Senin',
+            'selasa' => 'Selasa',
+            'rabu' => 'Rabu',
+            'kamis' => 'Kamis',
+            'jumat' => 'Jumat',
+            'sabtu' => 'Sabtu',
+        ];
+    }
+
+    private function urutanHari(?string $hari): int
+    {
+        return match ($hari) {
+            'senin' => 1,
+            'selasa' => 2,
+            'rabu' => 3,
+            'kamis' => 4,
+            'jumat' => 5,
+            'sabtu' => 6,
+            default => 99,
+        };
+    }
+
+    private function hariLabel(string $hari): string
+    {
+        return $this->hariList()[$hari] ?? '-';
+    }
+
+    private function tahunAjaranDefault()
+    {
+        return TahunAjaran::where('status', 'aktif')
+            ->latest()
+            ->first()
+            ?? TahunAjaran::latest()->first();
+    }
+
+    private function semesterDefault(?int $tahunAjaranId = null)
+    {
+        $queryAktif = Semester::where('status', 'aktif');
+
+        if ($tahunAjaranId) {
+            $queryAktif->where('tahun_ajaran_id', $tahunAjaranId);
+        }
+
+        $semester = $queryAktif->latest()->first();
+
+        if ($semester) {
+            return $semester;
+        }
+
+        $querySemua = Semester::query();
+
+        if ($tahunAjaranId) {
+            $querySemua->where('tahun_ajaran_id', $tahunAjaranId);
+        }
+
+        return $querySemua->latest()->first();
+    }
+
+    private function periodeTerpilih(Request $request): array
+    {
+        $tahunAjaranDefault = $this->tahunAjaranDefault();
+
+        $selectedTahunAjaranId = $request->filled('tahun_ajaran_id')
+            ? (int) $request->tahun_ajaran_id
+            : ($tahunAjaranDefault?->id);
+
+        $semesterDefault = $this->semesterDefault($selectedTahunAjaranId ? (int) $selectedTahunAjaranId : null);
+
+        $selectedSemesterId = $request->filled('semester_id')
+            ? (int) $request->semester_id
+            : ($semesterDefault?->id);
+
+        return [
+            $selectedTahunAjaranId,
+            $selectedSemesterId,
+        ];
+    }
+
     public function index(Request $request)
     {
-        $query = JadwalPelajaran::with([
-            'tahunAjaran',
-            'semester',
-            'kelas',
-            'mataPelajaran',
-            'guru',
-        ]);
+        $kelasList = Kelas::with('waliKelas')
+            ->where('status', 'aktif')
+            ->orderBy('tingkat')
+            ->orderBy('nama_kelas')
+            ->get();
 
-        if ($request->filled('tahun_ajaran_id')) {
-            $query->where('tahun_ajaran_id', $request->tahun_ajaran_id);
-        }
-
-        if ($request->filled('semester_id')) {
-            $query->where('semester_id', $request->semester_id);
-        }
-
-        if ($request->filled('kelas_id')) {
-            $query->where('kelas_id', $request->kelas_id);
-        }
-
-        if ($request->filled('guru_id')) {
-            $query->where('guru_id', $request->guru_id);
-        }
-
-        if ($request->filled('hari')) {
-            $query->where('hari', $request->hari);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $jadwalPelajarans = $query
-            ->orderByRaw("FIELD(hari, 'senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu')")
-            ->orderBy('jam_mulai')
-            ->paginate(10)
-            ->withQueryString();
+        $kelasPerTingkat = $kelasList->groupBy(function ($kelas) {
+            return $kelas->tingkat ?: 'Lainnya';
+        });
 
         $tahunAjarans = TahunAjaran::latest()->get();
 
@@ -98,43 +131,263 @@ class JadwalPelajaranController extends Controller
             ->latest()
             ->get();
 
-        $kelasList = Kelas::orderBy('tingkat')
-            ->orderBy('nama_kelas')
-            ->get();
+        $selectedTahunAjaranId = $request->tahun_ajaran_id;
+        $selectedSemesterId = $request->semester_id;
+        $selectedStatus = $request->status;
 
-        $gurus = Pegawai::where('jenis_pegawai', 'guru')
-            ->orderBy('nama_pegawai')
-            ->get();
+        $kelasList = $kelasList->map(function ($kelas) use ($selectedTahunAjaranId, $selectedSemesterId, $selectedStatus) {
+            $queryJadwal = JadwalPelajaran::where('kelas_id', $kelas->id);
+
+            if ($selectedTahunAjaranId) {
+                $queryJadwal->where('tahun_ajaran_id', $selectedTahunAjaranId);
+            }
+
+            if ($selectedSemesterId) {
+                $queryJadwal->where('semester_id', $selectedSemesterId);
+            }
+
+            if ($selectedStatus) {
+                $queryJadwal->where('status', $selectedStatus);
+            }
+
+            $kelas->total_jadwal = (clone $queryJadwal)->count();
+            $kelas->total_jadwal_aktif = (clone $queryJadwal)->where('status', 'aktif')->count();
+            $kelas->total_mapel = (clone $queryJadwal)->pluck('mata_pelajaran_id')->unique()->count();
+            $kelas->total_guru = (clone $queryJadwal)->pluck('guru_id')->unique()->count();
+
+            return $kelas;
+        });
+
+        $kelasPerTingkat = $kelasList->groupBy(function ($kelas) {
+            return $kelas->tingkat ?: 'Lainnya';
+        });
+
+        $totalKelas = $kelasList->count();
+        $totalJadwal = $kelasList->sum('total_jadwal');
 
         $routePrefix = $this->routePrefix();
 
         return view('admin.pages.jadwal-pelajaran.index', compact(
-            'jadwalPelajarans',
+            'kelasPerTingkat',
             'tahunAjarans',
             'semesters',
-            'kelasList',
-            'gurus',
+            'selectedTahunAjaranId',
+            'selectedSemesterId',
+            'selectedStatus',
+            'totalKelas',
+            'totalJadwal',
             'routePrefix'
         ));
     }
 
-    /**
-     * penjelasan: Method create menampilkan form tambah jadwal pelajaran.
-     */
-    public function create()
+    public function kelas(Request $request, Kelas $kelas)
     {
+        $kelas->load('waliKelas');
+
+        $tahunAjarans = TahunAjaran::latest()->get();
+
+        $semesters = Semester::with('tahunAjaran')
+            ->latest()
+            ->get();
+
+        [$selectedTahunAjaranId, $selectedSemesterId] = $this->periodeTerpilih($request);
+
+        $selectedStatus = $request->status;
+
+        $query = JadwalPelajaran::with([
+                'tahunAjaran',
+                'semester',
+                'kelas',
+                'mataPelajaran',
+                'guru',
+            ])
+            ->where('kelas_id', $kelas->id);
+
+        if ($selectedTahunAjaranId) {
+            $query->where('tahun_ajaran_id', $selectedTahunAjaranId);
+        }
+
+        if ($selectedSemesterId) {
+            $query->where('semester_id', $selectedSemesterId);
+        }
+
+        if ($selectedStatus) {
+            $query->where('status', $selectedStatus);
+        }
+
+        $jadwalPelajarans = $query
+            ->get()
+            ->sortBy(function ($jadwal) {
+                $hari = str_pad((string) $this->urutanHari($jadwal->hari), 2, '0', STR_PAD_LEFT);
+                $jamMulai = $jadwal->jam_mulai ?? '99:99';
+
+                return $hari . '|' . $jamMulai;
+            })
+            ->values();
+
+        $jadwalPerHari = collect($this->hariList())->map(function ($label, $hari) use ($jadwalPelajarans) {
+            $items = $jadwalPelajarans->where('hari', $hari)->values();
+
+            return (object) [
+                'hari' => $hari,
+                'label' => $label,
+                'jadwals' => $items,
+                'total_jadwal' => $items->count(),
+                'total_aktif' => $items->where('status', 'aktif')->count(),
+            ];
+        })->values();
+
+        $tahunAjaranDipilih = $selectedTahunAjaranId
+            ? TahunAjaran::find($selectedTahunAjaranId)
+            : null;
+
+        $semesterDipilih = $selectedSemesterId
+            ? Semester::find($selectedSemesterId)
+            : null;
+
+        $routePrefix = $this->routePrefix();
+
+        return view('admin.pages.jadwal-pelajaran.kelas', compact(
+            'kelas',
+            'tahunAjarans',
+            'semesters',
+            'selectedTahunAjaranId',
+            'selectedSemesterId',
+            'selectedStatus',
+            'tahunAjaranDipilih',
+            'semesterDipilih',
+            'jadwalPerHari',
+            'jadwalPelajarans',
+            'routePrefix'
+        ));
+    }
+
+    public function create(Request $request)
+    {
+        $kelasList = Kelas::with('waliKelas')
+            ->where('status', 'aktif')
+            ->orderBy('tingkat')
+            ->orderBy('nama_kelas')
+            ->get();
+
+        $kelasPerTingkat = $kelasList->groupBy(function ($kelas) {
+            return $kelas->tingkat ?: 'Lainnya';
+        });
+
+        $routePrefix = $this->routePrefix();
+
+        return view('admin.pages.jadwal-pelajaran.create', compact(
+            'kelasList',
+            'kelasPerTingkat',
+            'routePrefix'
+        ));
+    }
+
+    public function createKelas(Request $request, Kelas $kelas)
+    {
+        $kelas->load('waliKelas');
+
+        [$selectedTahunAjaranId, $selectedSemesterId] = $this->periodeTerpilih($request);
+
         $tahunAjarans = TahunAjaran::where('status', 'aktif')
             ->latest()
             ->get();
 
+        if ($tahunAjarans->isEmpty()) {
+            $tahunAjarans = TahunAjaran::latest()->get();
+        }
+
         $semesters = Semester::with('tahunAjaran')
-            ->where('status', 'aktif')
+            ->where(function ($query) use ($selectedTahunAjaranId) {
+                $query->where('status', 'aktif');
+
+                if ($selectedTahunAjaranId) {
+                    $query->where('tahun_ajaran_id', $selectedTahunAjaranId);
+                }
+            })
             ->latest()
             ->get();
 
-        $kelasList = Kelas::where('status', 'aktif')
-            ->orderBy('tingkat')
-            ->orderBy('nama_kelas')
+        if ($semesters->isEmpty()) {
+            $semesters = Semester::with('tahunAjaran')
+                ->when($selectedTahunAjaranId, function ($query) use ($selectedTahunAjaranId) {
+                    $query->where('tahun_ajaran_id', $selectedTahunAjaranId);
+                })
+                ->latest()
+                ->get();
+        }
+
+        $jadwalPerHari = collect($this->hariList())->map(function ($label, $hari) use ($kelas, $selectedTahunAjaranId, $selectedSemesterId) {
+            $query = JadwalPelajaran::where('kelas_id', $kelas->id)
+                ->where('hari', $hari);
+
+            if ($selectedTahunAjaranId) {
+                $query->where('tahun_ajaran_id', $selectedTahunAjaranId);
+            }
+
+            if ($selectedSemesterId) {
+                $query->where('semester_id', $selectedSemesterId);
+            }
+
+            return (object) [
+                'hari' => $hari,
+                'label' => $label,
+                'total_jadwal' => (clone $query)->count(),
+                'total_aktif' => (clone $query)->where('status', 'aktif')->count(),
+            ];
+        })->values();
+
+        $tahunAjaranDipilih = $selectedTahunAjaranId
+            ? TahunAjaran::find($selectedTahunAjaranId)
+            : null;
+
+        $semesterDipilih = $selectedSemesterId
+            ? Semester::find($selectedSemesterId)
+            : null;
+
+        $routePrefix = $this->routePrefix();
+
+        return view('admin.pages.jadwal-pelajaran.create-kelas', compact(
+            'kelas',
+            'tahunAjarans',
+            'semesters',
+            'selectedTahunAjaranId',
+            'selectedSemesterId',
+            'tahunAjaranDipilih',
+            'semesterDipilih',
+            'jadwalPerHari',
+            'routePrefix'
+        ));
+    }
+
+    public function createHari(Request $request, Kelas $kelas, string $hari)
+    {
+        if (! array_key_exists($hari, $this->hariList())) {
+            abort(404);
+        }
+
+        $kelas->load('waliKelas');
+
+        $validated = $request->validate([
+            'tahun_ajaran_id' => ['required', 'exists:tahun_ajarans,id'],
+            'semester_id' => ['required', 'exists:semesters,id'],
+        ], [
+            'tahun_ajaran_id.required' => 'Tahun ajaran wajib dipilih.',
+            'semester_id.required' => 'Semester wajib dipilih.',
+        ]);
+
+        $tahunAjaran = TahunAjaran::findOrFail($validated['tahun_ajaran_id']);
+        $semester = Semester::findOrFail($validated['semester_id']);
+
+        $jadwalHariIni = JadwalPelajaran::with([
+                'mataPelajaran',
+                'guru',
+            ])
+            ->where('kelas_id', $kelas->id)
+            ->where('tahun_ajaran_id', $tahunAjaran->id)
+            ->where('semester_id', $semester->id)
+            ->where('hari', $hari)
+            ->orderBy('jam_mulai')
             ->get();
 
         $mataPelajarans = MataPelajaran::where('status', 'aktif')
@@ -146,51 +399,157 @@ class JadwalPelajaranController extends Controller
             ->orderBy('nama_pegawai')
             ->get();
 
+        $jadwalForm = old('jadwal');
+
+        if (! $jadwalForm) {
+            if ($jadwalHariIni->isNotEmpty()) {
+                $jadwalForm = $jadwalHariIni->map(function ($jadwal) {
+                    return [
+                        'id' => $jadwal->id,
+                        'jam_mulai' => $jadwal->jam_mulai_format,
+                        'jam_selesai' => $jadwal->jam_selesai_format,
+                        'mata_pelajaran_id' => $jadwal->mata_pelajaran_id,
+                        'guru_id' => $jadwal->guru_id,
+                        'status' => $jadwal->status,
+                    ];
+                })->toArray();
+            } else {
+                $jadwalForm = [
+                    [
+                        'id' => '',
+                        'jam_mulai' => '',
+                        'jam_selesai' => '',
+                        'mata_pelajaran_id' => '',
+                        'guru_id' => '',
+                        'status' => 'aktif',
+                    ],
+                ];
+            }
+        }
+
         $routePrefix = $this->routePrefix();
 
-        return view('admin.pages.jadwal-pelajaran.create', compact(
-            'tahunAjarans',
-            'semesters',
-            'kelasList',
+        return view('admin.pages.jadwal-pelajaran.create-hari', compact(
+            'kelas',
+            'hari',
+            'tahunAjaran',
+            'semester',
+            'jadwalHariIni',
+            'jadwalForm',
             'mataPelajarans',
             'gurus',
             'routePrefix'
         ));
     }
 
-    /**
-     * penjelasan: Method store menyimpan jadwal pelajaran baru.
-     */
     public function store(Request $request)
     {
+        return redirect()
+            ->route($this->routePrefix() . '.jadwal-pelajaran.create')
+            ->with('error', 'Gunakan alur baru: pilih kelas, pilih hari, lalu isi jadwal per hari.');
+    }
+
+    public function storeHari(Request $request, Kelas $kelas, string $hari)
+    {
+        if (! array_key_exists($hari, $this->hariList())) {
+            abort(404);
+        }
+
         $validated = $request->validate([
             'tahun_ajaran_id' => ['required', 'exists:tahun_ajarans,id'],
             'semester_id' => ['required', 'exists:semesters,id'],
-            'kelas_id' => ['required', 'exists:kelas,id'],
-            'mata_pelajaran_id' => ['required', 'exists:mata_pelajarans,id'],
-            'guru_id' => ['required', 'exists:pegawais,id'],
-            'hari' => ['required', Rule::in(['senin', 'selasa', 'rabu', 'kamis', 'jumat', 'sabtu'])],
-            'jam_mulai' => ['required', 'date_format:H:i'],
-            'jam_selesai' => ['required', 'date_format:H:i'],
-            'status' => ['required', Rule::in(['aktif', 'nonaktif'])],
+
+            'jadwal' => ['required', 'array', 'min:1', 'max:6'],
+            'jadwal.*.id' => ['nullable', 'integer', 'exists:jadwal_pelajarans,id'],
+            'jadwal.*.jam_mulai' => ['required', 'date_format:H:i'],
+            'jadwal.*.jam_selesai' => ['required', 'date_format:H:i'],
+            'jadwal.*.mata_pelajaran_id' => ['required', 'exists:mata_pelajarans,id'],
+            'jadwal.*.guru_id' => ['required', 'exists:pegawais,id'],
+            'jadwal.*.status' => ['required', Rule::in(['aktif', 'nonaktif'])],
         ], $this->validationMessages());
 
-        $this->validateTimeRange($validated);
+        $validated['kelas_id'] = $kelas->id;
+        $validated['hari'] = $hari;
 
-        $this->validateSupportingData($validated);
+        $existingDayIds = JadwalPelajaran::where('kelas_id', $kelas->id)
+            ->where('tahun_ajaran_id', $validated['tahun_ajaran_id'])
+            ->where('semester_id', $validated['semester_id'])
+            ->where('hari', $hari)
+            ->pluck('id')
+            ->toArray();
 
-        $this->validateNoScheduleConflict($validated);
+        foreach ($validated['jadwal'] as $index => $jadwalItem) {
+            $jadwalId = $jadwalItem['id'] ?? null;
 
-        JadwalPelajaran::create($validated);
+            if ($jadwalId && ! in_array((int) $jadwalId, array_map('intval', $existingDayIds), true)) {
+                throw ValidationException::withMessages([
+                    'jadwal' => 'Baris jadwal ke-' . ($index + 1) . ': ID jadwal tidak sesuai dengan kelas, hari, tahun ajaran, dan semester yang sedang diedit.',
+                ]);
+            }
+
+            $dataJadwal = [
+                'tahun_ajaran_id' => $validated['tahun_ajaran_id'],
+                'semester_id' => $validated['semester_id'],
+                'kelas_id' => $kelas->id,
+                'mata_pelajaran_id' => $jadwalItem['mata_pelajaran_id'],
+                'guru_id' => $jadwalItem['guru_id'],
+                'hari' => $hari,
+                'jam_mulai' => $jadwalItem['jam_mulai'],
+                'jam_selesai' => $jadwalItem['jam_selesai'],
+                'status' => $jadwalItem['status'],
+            ];
+
+            $currentJadwal = $jadwalId
+                ? JadwalPelajaran::find($jadwalId)
+                : null;
+
+            $this->validateTimeRange($dataJadwal, $index + 1);
+            $this->validateSupportingData($dataJadwal, $index + 1);
+            $this->validateNoScheduleConflict($dataJadwal, $currentJadwal, $index + 1, $existingDayIds);
+        }
+
+        $this->validateNoSubmittedScheduleConflict($validated);
+
+        DB::transaction(function () use ($validated, $kelas, $hari, $existingDayIds) {
+            $submittedIds = [];
+
+            foreach ($validated['jadwal'] as $jadwalItem) {
+                $data = [
+                    'tahun_ajaran_id' => $validated['tahun_ajaran_id'],
+                    'semester_id' => $validated['semester_id'],
+                    'kelas_id' => $kelas->id,
+                    'mata_pelajaran_id' => $jadwalItem['mata_pelajaran_id'],
+                    'guru_id' => $jadwalItem['guru_id'],
+                    'hari' => $hari,
+                    'jam_mulai' => $jadwalItem['jam_mulai'],
+                    'jam_selesai' => $jadwalItem['jam_selesai'],
+                    'status' => $jadwalItem['status'],
+                ];
+
+                if (! empty($jadwalItem['id'])) {
+                    $jadwal = JadwalPelajaran::findOrFail($jadwalItem['id']);
+                    $jadwal->update($data);
+                    $submittedIds[] = $jadwal->id;
+                } else {
+                    $jadwal = JadwalPelajaran::create($data);
+                    $submittedIds[] = $jadwal->id;
+                }
+            }
+
+            JadwalPelajaran::whereIn('id', $existingDayIds)
+                ->whereNotIn('id', $submittedIds)
+                ->update(['status' => 'nonaktif']);
+        });
 
         return redirect()
-            ->route($this->routePrefix() . '.jadwal-pelajaran.index')
-            ->with('success', 'Jadwal pelajaran berhasil ditambahkan.');
+            ->route($this->routePrefix() . '.jadwal-pelajaran.create-kelas', [
+                'kelas' => $kelas->id,
+                'tahun_ajaran_id' => $validated['tahun_ajaran_id'],
+                'semester_id' => $validated['semester_id'],
+            ])
+            ->with('success', 'Jadwal hari ' . $this->hariLabel($hari) . ' kelas ' . $kelas->nama_kelas . ' berhasil disimpan.');
     }
 
-    /**
-     * penjelasan: Method show menampilkan detail jadwal pelajaran.
-     */
     public function show(JadwalPelajaran $jadwalPelajaran)
     {
         $jadwalPelajaran->load([
@@ -206,30 +565,35 @@ class JadwalPelajaranController extends Controller
         return view('admin.pages.jadwal-pelajaran.show', compact('jadwalPelajaran', 'routePrefix'));
     }
 
-    /**
-     * penjelasan: Method edit menampilkan form edit jadwal pelajaran.
-     */
     public function edit(JadwalPelajaran $jadwalPelajaran)
     {
-        $tahunAjarans = TahunAjaran::where('status', 'aktif')
-            ->orWhere('id', $jadwalPelajaran->tahun_ajaran_id)
+        $tahunAjarans = TahunAjaran::where(function ($query) use ($jadwalPelajaran) {
+                $query->where('status', 'aktif')
+                    ->orWhere('id', $jadwalPelajaran->tahun_ajaran_id);
+            })
             ->latest()
             ->get();
 
         $semesters = Semester::with('tahunAjaran')
-            ->where('status', 'aktif')
-            ->orWhere('id', $jadwalPelajaran->semester_id)
+            ->where(function ($query) use ($jadwalPelajaran) {
+                $query->where('status', 'aktif')
+                    ->orWhere('id', $jadwalPelajaran->semester_id);
+            })
             ->latest()
             ->get();
 
-        $kelasList = Kelas::where('status', 'aktif')
-            ->orWhere('id', $jadwalPelajaran->kelas_id)
+        $kelasList = Kelas::where(function ($query) use ($jadwalPelajaran) {
+                $query->where('status', 'aktif')
+                    ->orWhere('id', $jadwalPelajaran->kelas_id);
+            })
             ->orderBy('tingkat')
             ->orderBy('nama_kelas')
             ->get();
 
-        $mataPelajarans = MataPelajaran::where('status', 'aktif')
-            ->orWhere('id', $jadwalPelajaran->mata_pelajaran_id)
+        $mataPelajarans = MataPelajaran::where(function ($query) use ($jadwalPelajaran) {
+                $query->where('status', 'aktif')
+                    ->orWhere('id', $jadwalPelajaran->mata_pelajaran_id);
+            })
             ->orderBy('nama_mapel')
             ->get();
 
@@ -254,9 +618,6 @@ class JadwalPelajaranController extends Controller
         ));
     }
 
-    /**
-     * penjelasan: Method update menyimpan perubahan jadwal pelajaran.
-     */
     public function update(Request $request, JadwalPelajaran $jadwalPelajaran)
     {
         $validated = $request->validate([
@@ -272,22 +633,20 @@ class JadwalPelajaranController extends Controller
         ], $this->validationMessages());
 
         $this->validateTimeRange($validated);
-
         $this->validateSupportingData($validated);
-
         $this->validateNoScheduleConflict($validated, $jadwalPelajaran);
 
         $jadwalPelajaran->update($validated);
 
         return redirect()
-            ->route($this->routePrefix() . '.jadwal-pelajaran.index')
+            ->route($this->routePrefix() . '.jadwal-pelajaran.kelas', [
+                'kelas' => $validated['kelas_id'],
+                'tahun_ajaran_id' => $validated['tahun_ajaran_id'],
+                'semester_id' => $validated['semester_id'],
+            ])
             ->with('success', 'Jadwal pelajaran berhasil diperbarui.');
     }
 
-    /**
-     * penjelasan: Method toggleStatus mengubah status jadwal aktif/nonaktif.
-     * penjelasan: Jika jadwal akan diaktifkan, sistem tetap mengecek data aktif dan bentrok jadwal.
-     */
     public function toggleStatus(JadwalPelajaran $jadwalPelajaran)
     {
         if ($jadwalPelajaran->status === 'aktif') {
@@ -321,9 +680,6 @@ class JadwalPelajaranController extends Controller
         return back()->with('success', 'Jadwal pelajaran berhasil diaktifkan.');
     }
 
-    /**
-     * penjelasan: Method validationMessages menyimpan semua pesan validasi Bahasa Indonesia.
-     */
     private function validationMessages(): array
     {
         return [
@@ -335,6 +691,29 @@ class JadwalPelajaranController extends Controller
 
             'kelas_id.required' => 'Kelas wajib dipilih.',
             'kelas_id.exists' => 'Kelas tidak valid.',
+
+            'jadwal.required' => 'Minimal satu jadwal wajib diisi.',
+            'jadwal.array' => 'Format jadwal tidak valid.',
+            'jadwal.min' => 'Minimal satu jadwal wajib diisi.',
+            'jadwal.max' => 'Maksimal 6 pelajaran dalam satu hari.',
+
+            'jadwal.*.id.integer' => 'ID jadwal tidak valid.',
+            'jadwal.*.id.exists' => 'ID jadwal tidak ditemukan.',
+
+            'jadwal.*.mata_pelajaran_id.required' => 'Mata pelajaran wajib dipilih.',
+            'jadwal.*.mata_pelajaran_id.exists' => 'Mata pelajaran tidak valid.',
+
+            'jadwal.*.guru_id.required' => 'Guru pengajar wajib dipilih.',
+            'jadwal.*.guru_id.exists' => 'Guru pengajar tidak valid.',
+
+            'jadwal.*.jam_mulai.required' => 'Jam mulai wajib diisi.',
+            'jadwal.*.jam_mulai.date_format' => 'Format jam mulai tidak valid.',
+
+            'jadwal.*.jam_selesai.required' => 'Jam selesai wajib diisi.',
+            'jadwal.*.jam_selesai.date_format' => 'Format jam selesai tidak valid.',
+
+            'jadwal.*.status.required' => 'Status wajib dipilih.',
+            'jadwal.*.status.in' => 'Status yang dipilih tidak valid.',
 
             'mata_pelajaran_id.required' => 'Mata pelajaran wajib dipilih.',
             'mata_pelajaran_id.exists' => 'Mata pelajaran tidak valid.',
@@ -356,33 +735,34 @@ class JadwalPelajaranController extends Controller
         ];
     }
 
-    /**
-     * penjelasan: Method validateTimeRange memastikan jam selesai lebih besar dari jam mulai.
-     */
-    private function validateTimeRange(array $validated): void
+    private function validateTimeRange(array $validated, ?int $baris = null): void
     {
         if ($validated['jam_selesai'] <= $validated['jam_mulai']) {
+            $pesan = 'Jam selesai harus lebih besar dari jam mulai.';
+
+            if ($baris) {
+                $pesan = 'Baris jadwal ke-' . $baris . ': ' . $pesan;
+            }
+
             throw ValidationException::withMessages([
-                'jam_selesai' => 'Jam selesai harus lebih besar dari jam mulai.',
+                'jam_selesai' => $pesan,
             ]);
         }
     }
 
-    /**
-     * penjelasan: Method validateSupportingData memastikan data pendukung jadwal valid dan aktif.
-     * penjelasan: Jadwal aktif wajib memakai tahun ajaran aktif, semester aktif, kelas aktif, mapel aktif, dan guru aktif.
-     */
-    private function validateSupportingData(array $validated): void
+    private function validateSupportingData(array $validated, ?int $baris = null): void
     {
         if ($validated['status'] !== 'aktif') {
             return;
         }
 
+        $prefix = $baris ? 'Baris jadwal ke-' . $baris . ': ' : '';
+
         $tahunAjaran = TahunAjaran::find($validated['tahun_ajaran_id']);
 
         if (! $tahunAjaran || $tahunAjaran->status !== 'aktif') {
             throw ValidationException::withMessages([
-                'tahun_ajaran_id' => 'Jadwal aktif harus memakai tahun ajaran yang aktif.',
+                'tahun_ajaran_id' => $prefix . 'Jadwal aktif harus memakai tahun ajaran yang aktif.',
             ]);
         }
 
@@ -390,13 +770,13 @@ class JadwalPelajaranController extends Controller
 
         if (! $semester || $semester->status !== 'aktif') {
             throw ValidationException::withMessages([
-                'semester_id' => 'Jadwal aktif harus memakai semester yang aktif.',
+                'semester_id' => $prefix . 'Jadwal aktif harus memakai semester yang aktif.',
             ]);
         }
 
         if ((int) $semester->tahun_ajaran_id !== (int) $validated['tahun_ajaran_id']) {
             throw ValidationException::withMessages([
-                'semester_id' => 'Semester yang dipilih harus sesuai dengan tahun ajaran.',
+                'semester_id' => $prefix . 'Semester yang dipilih harus sesuai dengan tahun ajaran.',
             ]);
         }
 
@@ -406,7 +786,7 @@ class JadwalPelajaranController extends Controller
 
         if (! $kelasAktif) {
             throw ValidationException::withMessages([
-                'kelas_id' => 'Kelas yang dipilih harus berstatus aktif.',
+                'kelas_id' => $prefix . 'Kelas yang dipilih harus berstatus aktif.',
             ]);
         }
 
@@ -416,7 +796,7 @@ class JadwalPelajaranController extends Controller
 
         if (! $mataPelajaranAktif) {
             throw ValidationException::withMessages([
-                'mata_pelajaran_id' => 'Mata pelajaran yang dipilih harus berstatus aktif.',
+                'mata_pelajaran_id' => $prefix . 'Mata pelajaran yang dipilih harus berstatus aktif.',
             ]);
         }
 
@@ -427,21 +807,22 @@ class JadwalPelajaranController extends Controller
 
         if (! $guruAktif) {
             throw ValidationException::withMessages([
-                'guru_id' => 'Guru yang dipilih harus pegawai jenis guru dan berstatus aktif.',
+                'guru_id' => $prefix . 'Guru yang dipilih harus pegawai jenis guru dan berstatus aktif.',
             ]);
         }
     }
 
-    /**
-     * penjelasan: Method validateNoScheduleConflict mengecek bentrok jadwal untuk kelas dan guru.
-     * penjelasan: Bentrok terjadi jika hari sama, semester sama, dan rentang jam saling tumpang tindih.
-     * penjelasan: Jadwal nonaktif tidak dihitung sebagai bentrok.
-     */
-    private function validateNoScheduleConflict(array $validated, ?JadwalPelajaran $currentJadwal = null): void
-    {
+    private function validateNoScheduleConflict(
+        array $validated,
+        ?JadwalPelajaran $currentJadwal = null,
+        ?int $baris = null,
+        array $excludeIds = []
+    ): void {
         if ($validated['status'] !== 'aktif') {
             return;
         }
+
+        $prefix = $baris ? 'Baris jadwal ke-' . $baris . ': ' : '';
 
         $kelasConflictQuery = JadwalPelajaran::where('status', 'aktif')
             ->where('semester_id', $validated['semester_id'])
@@ -454,9 +835,13 @@ class JadwalPelajaranController extends Controller
             $kelasConflictQuery->where('id', '!=', $currentJadwal->id);
         }
 
+        if (! empty($excludeIds)) {
+            $kelasConflictQuery->whereNotIn('id', $excludeIds);
+        }
+
         if ($kelasConflictQuery->exists()) {
             throw ValidationException::withMessages([
-                'jam_mulai' => 'Jadwal kelas bentrok dengan jadwal lain pada hari dan jam tersebut.',
+                'jam_mulai' => $prefix . 'Jadwal kelas bentrok dengan jadwal lain pada hari dan jam tersebut.',
             ]);
         }
 
@@ -471,10 +856,83 @@ class JadwalPelajaranController extends Controller
             $guruConflictQuery->where('id', '!=', $currentJadwal->id);
         }
 
+        if (! empty($excludeIds)) {
+            $guruConflictQuery->whereNotIn('id', $excludeIds);
+        }
+
         if ($guruConflictQuery->exists()) {
             throw ValidationException::withMessages([
-                'guru_id' => 'Guru sudah memiliki jadwal lain pada hari dan jam tersebut.',
+                'guru_id' => $prefix . 'Guru sudah memiliki jadwal lain pada hari dan jam tersebut.',
             ]);
+        }
+    }
+
+    private function validateNoSubmittedScheduleConflict(array $validated): void
+    {
+        $jadwals = collect($validated['jadwal'])
+            ->values()
+            ->map(function ($item) use ($validated) {
+                return [
+                    'semester_id' => $validated['semester_id'],
+                    'kelas_id' => $validated['kelas_id'],
+                    'guru_id' => $item['guru_id'],
+                    'hari' => $validated['hari'],
+                    'jam_mulai' => $item['jam_mulai'],
+                    'jam_selesai' => $item['jam_selesai'],
+                    'status' => $item['status'],
+                ];
+            })
+            ->filter(function ($item) {
+                return $item['status'] === 'aktif';
+            })
+            ->values();
+
+        for ($i = 0; $i < $jadwals->count(); $i++) {
+            for ($j = $i + 1; $j < $jadwals->count(); $j++) {
+                $jadwalA = $jadwals[$i];
+                $jadwalB = $jadwals[$j];
+
+                if ($jadwalA['hari'] !== $jadwalB['hari']) {
+                    continue;
+                }
+
+                $bentrokWaktu = $jadwalA['jam_mulai'] < $jadwalB['jam_selesai']
+                    && $jadwalA['jam_selesai'] > $jadwalB['jam_mulai'];
+
+                if (! $bentrokWaktu) {
+                    continue;
+                }
+
+                throw ValidationException::withMessages([
+                    'jadwal' => 'Jadwal yang disubmit bentrok pada baris ke-' . ($i + 1) . ' dan baris ke-' . ($j + 1) . '. Dalam satu kelas, jadwal pada hari dan jam yang sama tidak boleh bertabrakan.',
+                ]);
+            }
+        }
+
+        for ($i = 0; $i < $jadwals->count(); $i++) {
+            for ($j = $i + 1; $j < $jadwals->count(); $j++) {
+                $jadwalA = $jadwals[$i];
+                $jadwalB = $jadwals[$j];
+
+                if ((int) $jadwalA['guru_id'] !== (int) $jadwalB['guru_id']) {
+                    continue;
+                }
+
+                if ($jadwalA['hari'] !== $jadwalB['hari']) {
+                    continue;
+                }
+
+                $bentrokWaktu = $jadwalA['jam_mulai'] < $jadwalB['jam_selesai']
+                    && $jadwalA['jam_selesai'] > $jadwalB['jam_mulai'];
+
+                if (! $bentrokWaktu) {
+                    continue;
+                }
+
+                throw ValidationException::withMessages([
+                    'jadwal' => 'Guru pada baris ke-' . ($i + 1) . ' dan baris ke-' . ($j + 1) . ' memiliki jadwal yang bentrok.',
+                ]);
+            }
         }
     }
 }

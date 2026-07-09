@@ -1,42 +1,27 @@
 <?php
 
 // penjelasan: Controller ini digunakan oleh guru.
-// penjelasan: Controller ini menangani daftar jadwal absen murid hari ini, form input absensi murid, simpan absensi, dan detail absensi.
-// penjelasan: Guru hanya bisa mengabsen murid sesuai jadwal pelajaran miliknya pada hari berjalan.
-// penjelasan: Tanggal absensi murid otomatis dari sistem untuk mengurangi manipulasi tanggal.
-// penjelasan: Controller ini memakai kolom guru_id sesuai struktur tabel jadwal_pelajarans.
+// penjelasan: Controller ini menangani halaman Absen Murid, input absensi murid, simpan absensi, dan detail absensi.
+// penjelasan: Guru hanya bisa mengabsen murid berdasarkan jadwal mengajar miliknya pada hari berjalan.
+// penjelasan: Pada halaman index, jadwal mengajar guru hari ini dikelompokkan per kelas.
+// penjelasan: Riwayat absensi murid juga dikelompokkan per kelas agar tampilan lebih rapi.
 
 namespace App\Http\Controllers\Guru;
 
 use App\Http\Controllers\Controller;
-// penjelasan: Controller adalah class dasar Laravel untuk membuat controller.
-
 use App\Models\AbsensiMurid;
-// penjelasan: Model AbsensiMurid digunakan untuk menyimpan dan membaca data absensi murid.
-
 use App\Models\JadwalPelajaran;
-// penjelasan: Model JadwalPelajaran digunakan untuk mengambil jadwal mengajar guru.
-
 use App\Models\Murid;
-// penjelasan: Model Murid digunakan untuk mengambil daftar murid aktif pada kelas jadwal.
-
 use Illuminate\Http\Request;
-// penjelasan: Request digunakan untuk mengambil data dari form absensi murid.
-
 use Illuminate\Support\Facades\DB;
-// penjelasan: DB digunakan untuk transaksi agar penyimpanan absensi murid aman.
-
 use Illuminate\Validation\Rule;
-// penjelasan: Rule digunakan untuk validasi pilihan status absensi dan id murid.
-
 use Illuminate\Validation\ValidationException;
-// penjelasan: ValidationException digunakan untuk menampilkan error validasi khusus.
 
 class AbsensiMuridController extends Controller
 {
     /**
      * penjelasan: Method ini mengambil data pegawai dari user yang sedang login.
-     * penjelasan: Guru wajib terhubung dengan data pegawai agar bisa menginput absensi murid.
+     * penjelasan: Akun guru wajib terhubung dengan data pegawai agar bisa menginput absensi murid.
      */
     private function currentPegawai()
     {
@@ -56,7 +41,8 @@ class AbsensiMuridController extends Controller
     /**
      * penjelasan: Method ini menampilkan halaman utama Absen Murid.
      * penjelasan: Jadwal yang tampil hanya jadwal aktif milik guru pada hari ini.
-     * penjelasan: Riwayat absensi yang tampil adalah absensi yang pernah diinput oleh guru tersebut.
+     * penjelasan: Jadwal dikelompokkan berdasarkan kelas agar guru memilih kelas terlebih dahulu.
+     * penjelasan: Riwayat absensi juga dikelompokkan berdasarkan kelas.
      */
     public function index()
     {
@@ -85,7 +71,43 @@ class AbsensiMuridController extends Controller
             $jadwal->total_absensi_hari_ini = AbsensiMurid::where('jadwal_pelajaran_id', $jadwal->id)
                 ->whereDate('tanggal_absen', $tanggalHariIni)
                 ->count();
+
+            $jadwal->target_absensi = $jadwal->total_murid_aktif;
+
+            $jadwal->status_absensi_hari_ini = $this->statusProgressAbsensi(
+                (int) $jadwal->total_absensi_hari_ini,
+                (int) $jadwal->target_absensi
+            );
         }
+
+        // penjelasan: Jadwal hari ini dikelompokkan berdasarkan kelas_id.
+        $kelasJadwalHariIni = $jadwalHariIni
+            ->groupBy('kelas_id')
+            ->map(function ($jadwals) {
+                $jadwalPertama = $jadwals->first();
+
+                $totalMuridAktif = (int) ($jadwalPertama->total_murid_aktif ?? 0);
+                $totalJadwal = $jadwals->count();
+
+                $totalAbsensiHariIni = $jadwals->sum(function ($jadwal) {
+                    return (int) ($jadwal->total_absensi_hari_ini ?? 0);
+                });
+
+                $targetAbsensi = $totalMuridAktif * $totalJadwal;
+
+                return (object) [
+                    'kelas' => $jadwalPertama->kelas,
+                    'kelas_id' => $jadwalPertama->kelas_id,
+                    'jadwals' => $jadwals->values(),
+                    'total_jadwal' => $totalJadwal,
+                    'total_murid_aktif' => $totalMuridAktif,
+                    'total_absensi_hari_ini' => $totalAbsensiHariIni,
+                    'target_absensi' => $targetAbsensi,
+                    'status_absensi_hari_ini' => $this->statusProgressAbsensi($totalAbsensiHariIni, $targetAbsensi),
+                ];
+            })
+            ->sortBy(fn ($item) => $item->kelas?->nama_kelas ?? '')
+            ->values();
 
         $statusCounts = AbsensiMurid::where('guru_id', $guru->id)
             ->whereDate('tanggal_absen', $tanggalHariIni)
@@ -93,6 +115,8 @@ class AbsensiMuridController extends Controller
             ->groupBy('status_absen')
             ->pluck('total', 'status_absen');
 
+        // penjelasan: Riwayat absensi milik guru diambil semua lalu dikelompokkan per kelas.
+        // penjelasan: Ini membuat tampilan bawah halaman Absen Murid tidak lagi berupa tabel panjang per murid.
         $riwayatAbsensi = AbsensiMurid::with([
                 'murid',
                 'kelas',
@@ -102,21 +126,50 @@ class AbsensiMuridController extends Controller
             ->where('guru_id', $guru->id)
             ->latest('tanggal_absen')
             ->latest()
-            ->paginate(10);
+            ->get();
+
+        $riwayatAbsensiTotal = $riwayatAbsensi->count();
+
+        $riwayatAbsensiPerKelas = $riwayatAbsensi
+            ->groupBy('kelas_id')
+            ->map(function ($items) {
+                $kelas = $items->first()?->kelas;
+                $status = $items->groupBy('status_absen')->map->count();
+                $tanggalTerakhir = $items->sortByDesc('tanggal_absen')->first()?->tanggal_absen;
+
+                return (object) [
+                    'kelas_id' => $kelas?->id,
+                    'kelas' => $kelas,
+                    'total_data' => $items->count(),
+                    'total_murid' => $items->pluck('murid_id')->unique()->count(),
+                    'total_mapel' => $items->pluck('mata_pelajaran_id')->unique()->count(),
+                    'hadir' => $status['hadir'] ?? 0,
+                    'izin' => $status['izin'] ?? 0,
+                    'sakit' => $status['sakit'] ?? 0,
+                    'alpha' => $status['alpha'] ?? 0,
+                    'terlambat' => $status['terlambat'] ?? 0,
+                    'tanggal_terakhir' => $tanggalTerakhir,
+                    'absensis' => $items->take(10)->values(),
+                ];
+            })
+            ->sortBy(fn ($item) => $item->kelas?->nama_kelas ?? '')
+            ->values();
 
         return view('admin.pages.absensi-murid.index', compact(
             'guru',
             'tanggalHariIni',
             'hariHariIni',
             'jadwalHariIni',
+            'kelasJadwalHariIni',
             'statusCounts',
-            'riwayatAbsensi'
+            'riwayatAbsensiPerKelas',
+            'riwayatAbsensiTotal'
         ));
     }
 
     /**
      * penjelasan: Method ini menampilkan form input absensi murid berdasarkan jadwal pelajaran.
-     * penjelasan: Absensi hanya bisa dilakukan jika jadwal tersebut milik guru yang login dan sesuai hari ini.
+     * penjelasan: Daftar murid yang tampil hanya murid aktif pada kelas dari jadwal tersebut.
      */
     public function create(JadwalPelajaran $jadwalPelajaran)
     {
@@ -158,8 +211,8 @@ class AbsensiMuridController extends Controller
 
     /**
      * penjelasan: Method ini menyimpan absensi murid.
-     * penjelasan: Semua murid aktif pada kelas tersebut wajib memiliki status absensi.
-     * penjelasan: Jika absensi sudah pernah diinput pada jadwal dan tanggal yang sama, data akan diperbarui.
+     * penjelasan: Semua murid aktif pada kelas terkait wajib memiliki status absensi.
+     * penjelasan: Jika data sudah ada pada jadwal dan tanggal yang sama, data diperbarui.
      */
     public function store(Request $request, JadwalPelajaran $jadwalPelajaran)
     {
@@ -171,8 +224,6 @@ class AbsensiMuridController extends Controller
             return $redirect;
         }
 
-        // penjelasan: Mengambil semua murid aktif berdasarkan kelas pada jadwal pelajaran.
-        // penjelasan: ID murid langsung dikonversi ke integer agar konsisten dengan data dari form.
         $muridIds = Murid::where('kelas_id', $jadwalPelajaran->kelas_id)
             ->where('status', 'aktif')
             ->pluck('id')
@@ -186,13 +237,10 @@ class AbsensiMuridController extends Controller
         $validated = $request->validate([
             'absensi' => ['required', 'array'],
             'absensi.*.murid_id' => ['required', 'integer', Rule::in($muridIds)],
-            'absensi.*.status_absen' => ['required', Rule::in(['hadir', 'izin', 'sakit', 'alpha'])],
+            'absensi.*.status_absen' => ['required', Rule::in($this->statusAbsensiMurid())],
             'absensi.*.keterangan' => ['nullable', 'string', 'max:255'],
         ], $this->validationMessages());
 
-        // penjelasan: Data murid_id dari form kadang terbaca sebagai string.
-        // penjelasan: Semua murid_id dari form dikonversi ke integer agar perbandingan tidak gagal.
-        // penjelasan: Ini memperbaiki kasus murid hanya satu tetapi tetap dianggap belum lengkap.
         $submittedMuridIds = collect($validated['absensi'])
             ->pluck('murid_id')
             ->map(fn ($id) => (int) $id)
@@ -247,7 +295,6 @@ class AbsensiMuridController extends Controller
 
     /**
      * penjelasan: Method ini menampilkan detail absensi murid pada jadwal hari ini.
-     * penjelasan: Guru hanya bisa melihat detail absensi dari jadwal miliknya sendiri.
      */
     public function show(JadwalPelajaran $jadwalPelajaran)
     {
@@ -293,7 +340,6 @@ class AbsensiMuridController extends Controller
 
     /**
      * penjelasan: Method ini mengecek apakah jadwal boleh diakses oleh guru yang login.
-     * penjelasan: Jadwal harus milik guru tersebut, aktif, dan sesuai hari ini.
      */
     private function validateJadwalUntukHariIni(JadwalPelajaran $jadwalPelajaran, $guru)
     {
@@ -320,7 +366,6 @@ class AbsensiMuridController extends Controller
 
     /**
      * penjelasan: Method ini mengubah angka hari dari Carbon menjadi nama hari Bahasa Indonesia.
-     * penjelasan: 1 adalah Senin, 2 Selasa, dan seterusnya.
      */
     private function hariIndonesia(int $dayOfWeek): string
     {
@@ -333,6 +378,34 @@ class AbsensiMuridController extends Controller
             6 => 'sabtu',
             default => 'minggu',
         };
+    }
+
+    /**
+     * penjelasan: Method ini menyimpan daftar status absensi murid yang valid.
+     */
+    private function statusAbsensiMurid(): array
+    {
+        return ['hadir', 'izin', 'sakit', 'alpha', 'terlambat'];
+    }
+
+    /**
+     * penjelasan: Method ini menentukan status progress absensi.
+     */
+    private function statusProgressAbsensi(int $totalAbsensi, int $targetAbsensi): string
+    {
+        if ($targetAbsensi < 1) {
+            return 'tidak_ada_murid';
+        }
+
+        if ($totalAbsensi < 1) {
+            return 'belum_diabsen';
+        }
+
+        if ($totalAbsensi < $targetAbsensi) {
+            return 'belum_lengkap';
+        }
+
+        return 'sudah_lengkap';
     }
 
     /**

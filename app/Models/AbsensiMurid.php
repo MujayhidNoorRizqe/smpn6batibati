@@ -3,6 +3,7 @@
 // penjelasan: Model ini mewakili tabel absensi_murids.
 // penjelasan: Model ini digunakan untuk menyimpan dan membaca data absensi murid.
 // penjelasan: Absensi murid terhubung dengan murid, jadwal pelajaran, guru, kelas, dan mata pelajaran.
+// penjelasan: Model ini dipakai oleh modul Absen Murid, Rekap Absensi Murid Admin, dan Rekap Absen Murid Guru.
 
 namespace App\Models;
 
@@ -66,7 +67,21 @@ class AbsensiMurid extends Model
             'izin' => 'Izin',
             'sakit' => 'Sakit',
             'alpha' => 'Alpha',
+            'alpa' => 'Alpha',
+            'terlambat' => 'Terlambat',
             default => '-',
+        };
+    }
+
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return match ($this->status_absen) {
+            'hadir' => 'badge-success',
+            'izin' => 'badge-info',
+            'sakit' => 'badge-warning',
+            'terlambat' => 'badge-orange',
+            'alpha', 'alpa' => 'badge-danger',
+            default => 'badge',
         };
     }
 }
